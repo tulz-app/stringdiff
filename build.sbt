@@ -17,6 +17,12 @@ ThisBuild / publishArtifact in Test := false
 ThisBuild / publishMavenStyle := true
 ThisBuild / releaseCrossBuild := true
 
+lazy val noPublish = Seq(
+  publishLocal / skip := true,
+  publish / skip := true,
+  publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo")))
+)
+
 lazy val stringdiff =
   crossProject(JVMPlatform, JSPlatform)
     .crossType(CrossType.Pure)
@@ -49,7 +55,7 @@ lazy val stringdiff =
 
 lazy val root = project
   .in(file("."))
-  .settings()
+  .settings(noPublish)
   .aggregate(
     stringdiff.js,
     stringdiff.jvm
