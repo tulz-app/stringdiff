@@ -5,7 +5,7 @@
 A library for diff-ing strings.
 
 ```scala
-"app.tulz" %%% "stringdiff" % "0.1.0" 
+"app.tulz" %%% "stringdiff" % "0.1.1" 
 ```
 
 
