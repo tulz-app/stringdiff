@@ -3,7 +3,7 @@ package app.tulz.diff
 import scala.Console._
 
 class StringDiff(
-  beforeAll: String = "",
+  beforeAll: String = RESET,
   beforeNoMatch: String = "[",
   beforeExpected: String = YELLOW,
   afterExpected: String = RESET,
