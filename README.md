@@ -33,7 +33,7 @@ StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1
 ```
 
 ```
-[prefix |∅]common1 common2 [inside1 |inside2 ]common3 [∅|suffix]
+[prefix |∅]common1 common2 [inside1|inside2] common3 [∅|suffix]
 ```
 
 #### Raw AST
@@ -50,8 +50,8 @@ StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1
 List(
   Extra(List("prefix", " ")), 
   Match(List("common1", " ", "common2", " ")), 
-  Different(List("inside1", " "),List("inside2", " ")), 
-  Match(List("common3", " ")), 
+  Different(List("inside1"),List("inside2")), 
+  Match(List(" ", "common3", " ")), 
   Missing(List("suffix"))
 )
 ```
