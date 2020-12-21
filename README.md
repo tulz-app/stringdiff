@@ -8,55 +8,73 @@ A library for diff-ing strings.
 "app.tulz" %%% "stringdiff" % "0.1.1" 
 ```
 
+### Usage
+
+#### Output with ANSI colors:
 
 ```scala
-import app.tulz.diff.StringDiff
+import app.tulz.diff._
 
 StringDiff("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")
 // or 
-StringDiff.default("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")
+StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")(AnsiColorDiffFormat)
 ```
 
 ![screenshot 1](doc/images/screenshot1.png)
 
+#### Output without colors
+
+```scala
+import app.tulz.diff._
+
+StringDiff.text("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")
+// or 
+StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")(TextDiffFormat)
+```
+
+```
+[prefix |∅]common1 common2 [inside1 |inside2 ]common3 [∅|suffix]
+```
+
+#### Raw AST
+
 ```scala
 import app.tulz.diff.StringDiff
 
-StringDiff.xml("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")
+StringDiff.raw("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix") // List[DiffBlock]
 ```
-
-```xml
-<diff><no-match><expected><empty/></expected><actual>prefix </actual></no-match><match>common1 common2 </match><no-match><expected>inside2</expected><actual>inside1</actual></no-match><match> common3 </match><no-match><expected>suffix</expected><actual>common4</actual></no-match></diff>
-```
-
 
 ```scala
+List(
+  Extra(List("prefix", " ")), 
+  Match(List("common1", " ", "common2", " ")), 
+  Different(List("inside1", " "),List("inside2", " ")), 
+  Match(List("common3", " ")), 
+  Missing(List("suffix"))
+)
+```
 
+#### Custom format
 
+```scala
+import app.tulz.diff.StringDiff
 import scala.Console._
 
-val diff = new StringDiff(
-  beforeAll = "",
-  beforeNoMatch = "[",
-  beforeExpected = s"expected: ${YELLOW}",
-  afterExpected = RESET,
-  between = ", ",
-  beforeActual = s"actual: ${RED}",
-  afterActual = RESET,
-  empty = s"${MAGENTA}empty${RESET}",
-  afterNoMatch = "]",
-  beforeMatch = GREEN,
-  afterMatch = RESET,
-  afterAll = ""
-)
+val customFormat: DiffFormat[String] = (diff: List[DiffBlock]) =>
+  diff.map {
+    case DiffBlock.Match(m)                    => m.mkString
+    case DiffBlock.Missing(expected)           => s"[missing: ${YELLOW}${expected.mkString}${RESET}]"
+    case DiffBlock.Extra(actual)               => s"[extra: ${RED}${actual.mkString}${RESET}]"
+    case DiffBlock.Different(actual, expected) => s"[expected: ${YELLOW}${expected.mkString}${RESET}, actual: ${RED}${actual.mkString}${RESET}]"
+  }.mkString
 
-diff("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")
-
-// custom
+StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 inside3 common3 suffix")(customFormat)
+StringDiff.withFormat("common1 common2 inside1 inside2 common3 common4 suffix", "prefix common1 common2 inside3 common3")(customFormat)
 ```
+
 ![screenshot 2](doc/images/screenshot2.png)
 
-### More examples
+### Examples
 
 ```
 token1 token2 token3

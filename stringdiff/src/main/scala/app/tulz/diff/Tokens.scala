@@ -30,12 +30,17 @@ object Tokens {
   def matchingPrefixes(
     actual: List[String],
     expected: List[String]
-  ): (List[String], List[String], List[String]) = { // actualRem rem, expectedRem rem, prefix
-    val commonPrefixLength =
-      (1 to Math.min(actual.length, expected.length))
-        .takeWhile(len => actual.take(len) == expected.take(len))
-        .lastOption.getOrElse(0)
-    (actual.drop(commonPrefixLength), expected.drop(commonPrefixLength), actual.take(commonPrefixLength))
+  ): Option[(List[String], List[String], List[String])] = { // actualRem rem, expectedRem rem, prefix
+    (1 to Math.min(actual.length, expected.length))
+      .takeWhile(len => actual.take(len) == expected.take(len))
+      .lastOption
+      .map { commonPrefixLength =>
+        (
+          actual.drop(commonPrefixLength),
+          expected.drop(commonPrefixLength),
+          actual.take(commonPrefixLength)
+        )
+      }
   }
 
   def extraPrefixes(

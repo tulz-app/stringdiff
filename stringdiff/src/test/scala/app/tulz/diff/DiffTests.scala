@@ -5,30 +5,7 @@ import org.scalatest.matchers.should.Matchers
 
 class DiffTests extends AnyFunSuite with Matchers {
 
-  private val diff = StringDiff.xml
-
-  //  test("print examples") {
-  //    examples
-  //      .flatMap { case (actualTest, expectedTest) =>
-  //        if (actualTest.length != expectedTest.length) {
-  //          Seq(
-  //            (actualTest, expectedTest),
-  //            (expectedTest, actualTest)
-  //          ).distinct
-  //        } else {
-  //          Seq(
-  //            (actualTest, expectedTest)
-  //          )
-  //        }
-  //      }.foreach { case (actualTest, expectedTest) =>
-  //        println(s"'${actualTest}'")
-  //        println(s"'${expectedTest}'")
-  //        println()
-  //        println(StringDiff(actualTest, expectedTest))
-  //        println("-" * 50)
-  //
-  //      }
-  //  }
+  import DiffBlock._
 
   implicit class StringWithClean(s: String) {
 
@@ -40,11 +17,10 @@ class DiffTests extends AnyFunSuite with Matchers {
     name: String,
     act: String,
     exp: String,
-    expectedDiff: String
+    expectedDiff: List[DiffBlock]
   ): Unit = {
     test(name) {
-      val result = diff(act.clean, exp.clean)
-
+      val result = StringDiff.raw(act.clean, exp.clean)
       if (result != expectedDiff) {
         println()
         println("---" * 30)
@@ -55,6 +31,8 @@ class DiffTests extends AnyFunSuite with Matchers {
         println(exp.clean)
         println("diff:")
         println(StringDiff(act.clean, exp.clean))
+        println("expected:")
+        println(AnsiColorDiffFormat(expectedDiff))
         println("---" * 30)
       }
       result shouldBe expectedDiff
@@ -65,112 +43,143 @@ class DiffTests extends AnyFunSuite with Matchers {
     "equal strings",
     "token1 token2 token3",
     "token1 token2 token3",
-    "<diff><match>token1 token2 token3</match></diff>"
+    List(Match(List("token1", " ", "token2", " ", "token3")))
   )
 
   doTest(
     "different prefixes",
     "prefix1 match1 match2 match3",
     "prefix2 match1 match2 match3",
-    "<diff><no-match><expected>prefix2</expected><actual>prefix1</actual></no-match><match> match1 match2 match3</match></diff>"
+    List(Different(List("prefix1", " "), List("prefix2", " ")), Match(List("match1", " ", "match2", " ", "match3")))
   )
 
   doTest(
     "different suffixes",
     "match1 match2 match3 suffix1",
     "match1 match2 match3 suffix2",
-    "<diff><match>match1 match2 match3 </match><no-match><expected>suffix2</expected><actual>suffix1</actual></no-match></diff>"
+    List(Match(List("match1", " ", "match2", " ", "match3", " ")), Extra(List("suffix1")))
   )
 
   doTest(
     "different token in the middle",
     "match1 match2 inside1 match3",
     "match1 match2 inside2 match3",
-    "<diff><match>match1 match2 </match><no-match><expected>inside2</expected><actual>inside1</actual></no-match><match> match3</match></diff>"
+    List(Match(List("match1", " ", "match2", " ")), Different(List("inside1", " "), List("inside2", " ")), Match(List("match3")))
   )
 
   doTest(
     "different prefix and suffix and token in the middle",
     "prefix1 match1 match2 inside1 match3 suffix1",
     "prefix2 match1 match2 inside2 match3 suffix2",
-    "<diff><no-match><expected>prefix2</expected><actual>prefix1</actual></no-match><match> match1 match2 </match><no-match><expected>inside2</expected><actual>inside1</actual></no-match><match> match3 </match><no-match><expected>suffix2</expected><actual>suffix1</actual></no-match></diff>"
+    List(
+      Different(List("prefix1", " "), List("prefix2", " ")),
+      Match(List("match1", " ", "match2", " ")),
+      Different(List("inside1", " "), List("inside2", " ")),
+      Match(List("match3", " ")),
+      Extra(List("suffix1"))
+    )
   )
 
   doTest(
     "extra prefix in actual",
     "prefix1 match1 match2 match3",
     "match1 match2 match3        ",
-    "<diff><no-match><expected><empty/></expected><actual>prefix1 </actual></no-match><match>match1 match2 match3</match></diff>"
+    List(Extra(List("prefix1", " ")), Match(List("match1", " ", "match2", " ", "match3")))
   )
 
   doTest(
     "missing prefix in actual",
     "match1 match2 match3        ",
     "prefix1 match1 match2 match3",
-    "<diff><no-match><expected>prefix1 </expected><actual><empty/></actual></no-match><match>match1 match2 match3</match></diff>"
+    List(Missing(List("prefix1", " ")), Match(List("match1", " ", "match2", " ", "match3")))
   )
 
   doTest(
     "extra suffix in actual",
     "match1 match2 match3 suffix1",
     "match1 match2 match3        ",
-    "<diff><match>match1 match2 match3</match><no-match><expected><empty/></expected><actual> suffix1</actual></no-match></diff>"
+    List(Match(List("match1", " ", "match2", " ", "match3")))
   )
 
   doTest(
     "missing suffix in actual",
     "match1 match2 match3        ",
     "match1 match2 match3 suffix1",
-    "<diff><match>match1 match2 match3</match><no-match><expected> suffix1</expected><actual><empty/></actual></no-match></diff>"
+    List(Match(List("match1", " ", "match2", " ", "match3")))
   )
 
   doTest(
     "extra prefix and suffix in actual",
     "prefix1 match1 match2 match3 suffix1",
     "        match1 match2 match3        ",
-    "<diff><no-match><expected><empty/></expected><actual>prefix1 </actual></no-match><match>match1 match2 match3</match><no-match><expected><empty/></expected><actual> suffix1</actual></no-match></diff>"
+    List(Extra(List("prefix1", " ")), Match(List("match1", " ", "match2", " ", "match3")))
   )
 
   doTest(
     "extra prefix in actual, extra suffix in expected",
     "prefix1 match1 match2 match3 suffix1",
     "        match1 match2 match3        ",
-    "<diff><no-match><expected><empty/></expected><actual>prefix1 </actual></no-match><match>match1 match2 match3</match><no-match><expected><empty/></expected><actual> suffix1</actual></no-match></diff>"
+    List(Extra(List("prefix1", " ")), Match(List("match1", " ", "match2", " ", "match3")))
   )
 
   doTest(
     "missing prefix and suffix in actual",
     "        match1 match2 match3",
     "prefix1 match1 match2 match3 suffix1",
-    "<diff><no-match><expected>prefix1 </expected><actual><empty/></actual></no-match><match>match1 match2 match3</match><no-match><expected> suffix1</expected><actual><empty/></actual></no-match></diff>"
+    List(Missing(List("prefix1", " ")), Match(List("match1", " ", "match2", " ", "match3")))
   )
 
   doTest(
     "missing prefix and suffix, extra token in actual",
     "prefix1 match1 match2 inside1 match3 match4 suffix1",
     "        match1 match2         match3 match4        ",
-    "<diff><no-match><expected><empty/></expected><actual>prefix1 </actual></no-match><match>match1 match2 </match><no-match><expected><empty/></expected><actual>inside1 </actual></no-match><match>match3 match4</match><no-match><expected><empty/></expected><actual> suffix1</actual></no-match></diff>"
+    List(Extra(List("prefix1", " ")), Match(List("match1", " ", "match2", " ")), Extra(List("inside1", " ")), Match(List("match3", " ", "match4")))
   )
 
   doTest(
     "missing prefix and suffix, extra token in expected",
     "        match1 match2         match3 match4        ",
     "prefix1 match1 match2 inside1 match3 match4 suffix1",
-    "<diff><no-match><expected>prefix1 </expected><actual><empty/></actual></no-match><match>match1 match2 </match><no-match><expected>inside1 </expected><actual><empty/></actual></no-match><match>match3 match4</match><no-match><expected> suffix1</expected><actual><empty/></actual></no-match></diff>"
+    List(Missing(List("prefix1", " ")), Match(List("match1", " ", "match2", " ")), Missing(List("inside1", " ")), Match(List("match3", " ", "match4")))
   )
 
   doTest(
     "missing prefix and suffix in actual, extra token in expected",
     "        match1 match2 inside1 match3 match4        ",
     "prefix1 match1 match2         match3 match4 suffix1",
-    "<diff><no-match><expected>prefix1 </expected><actual><empty/></actual></no-match><match>match1 match2 </match><no-match><expected><empty/></expected><actual>inside1 </actual></no-match><match>match3 match4</match><no-match><expected> suffix1</expected><actual><empty/></actual></no-match></diff>"
+    List(Missing(List("prefix1", " ")), Match(List("match1", " ", "match2", " ")), Extra(List("inside1", " ")), Match(List("match3", " ", "match4")))
   )
 
   doTest(
     "missing prefix and suffix in expected, extra token in actual",
     "prefix1 match1 match2         match3 match4 suffix1",
     "        match1 match2 inside1 match3 match4        ",
-    "<diff><no-match><expected><empty/></expected><actual>prefix1 </actual></no-match><match>match1 match2 </match><no-match><expected>inside1 </expected><actual><empty/></actual></no-match><match>match3 match4</match><no-match><expected><empty/></expected><actual> suffix1</actual></no-match></diff>"
+    List(Extra(List("prefix1", " ")), Match(List("match1", " ", "match2", " ")), Missing(List("inside1", " ")), Match(List("match3", " ", "match4")))
+  )
+
+  doTest(
+    "example 1",
+    "prefix common1 common2 inside1 common3 common4",
+    "common1 common2 inside2 inside3 common3 suffix",
+    List(
+      Extra(List("prefix", " ")),
+      Match(List("common1", " ", "common2", " ")),
+      Different(List("inside1", " "), List("inside2", " ", "inside3", " ")),
+      Match(List("common3", " ")),
+      Missing(List("suffix"))
+    )
+  )
+
+  doTest(
+    "example 2",
+    "common1 common2 inside1 inside2 common3 common4 suffix",
+    "prefix common1 common2 inside3 common3",
+    List(
+      Missing(List("prefix", " ")),
+      Match(List("common1", " ", "common2", " ")),
+      Different(List("inside1", " ", "inside2", " "), List("inside3", " ")),
+      Match(List("common3"))
+    )
   )
 
 }
