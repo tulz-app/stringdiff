@@ -17,7 +17,7 @@ object StringDiff {
   def raw(
     actual: String,
     expected: String
-  ): List[DiffBlock] = withFormat(actual, expected)(identity)
+  ): List[DiffBlock] = withFormat(actual, expected)(RawDiffFormat)
 
   def withFormat[T](
     actual: String,

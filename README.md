@@ -5,7 +5,7 @@
 A library for diff-ing strings.
 
 ```scala
-"app.tulz" %%% "stringdiff" % "0.1.1" 
+"app.tulz" %%% "stringdiff" % "0.2.0" 
 ```
 
 ### Usage
@@ -39,9 +39,11 @@ StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1
 #### Raw AST
 
 ```scala
-import app.tulz.diff.StringDiff
+import app.tulz.diff._
 
 StringDiff.raw("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix") // List[DiffBlock]
+// OR
+StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")(RawDiffFormat) // List[DiffBlock]
 ```
 
 ```scala
