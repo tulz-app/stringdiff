@@ -9,5 +9,11 @@ object DiffBlock {
     actual: List[String],
     expected: List[String]
   ) extends DiffBlock
+  final case class Missing(
+    expected: List[String]
+  ) extends DiffBlock
+  final case class Extra(
+    actual: List[String]
+  ) extends DiffBlock
 
 }

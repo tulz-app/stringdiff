@@ -27,7 +27,7 @@ object Tokens {
     result.reverse
   }
 
-  def matchingPrefix(
+  def matchingPrefixes(
     actual: List[String],
     expected: List[String]
   ): (List[String], List[String], List[String]) = { // actualRem rem, expectedRem rem, prefix
@@ -38,39 +38,32 @@ object Tokens {
     (actual.drop(commonPrefixLength), expected.drop(commonPrefixLength), actual.take(commonPrefixLength))
   }
 
-  def nonMatchingPrefix(
-    actual: List[String],
-    expected: List[String]
-  ): (List[String], List[String], List[String], List[String]) = { // actualRem rem, expectedRem rem, prefix
-    val maxLen = Math.min(actual.length, expected.length)
-    val distinctPrefixLength =
-      (1 to maxLen)
-        .takeWhile { len =>
-          val lastIsWhitespace = isWhitespace(actual(len - 1)) && isWhitespace(expected(len - 1))
-          val nextIsDifferent  = len < maxLen && actual(len) != expected(len)
-          actual(len - 1) != expected(len - 1) || (lastIsWhitespace && nextIsDifferent)
-        }
-        .lastOption.getOrElse(0)
-    (
-      actual.drop(distinctPrefixLength),
-      expected.drop(distinctPrefixLength),
-      actual.take(distinctPrefixLength),
-      expected.take(distinctPrefixLength)
-    )
-  }
-
-  def extraPrefix(
+  def extraPrefixes(
     tokens: List[String],
     reference: List[String]
-  ): (List[String], List[String]) = { // tokens tail, tokens prefix
-    val maxLen = Math.min(tokens.length, reference.length)
-    val prefixLength =
-      (1 to maxLen)
-        .takeWhile { len =>
-          tokens(len - 1) != reference.head
-        }
-        .lastOption.getOrElse(0)
-    (tokens.drop(prefixLength), tokens.take(prefixLength))
+  ): List[(List[String], List[String])] = { // tokens tail, tokens prefix
+    (1 to tokens.length)
+      .map { len =>
+        (
+          len,
+          tokens.take(len) != reference.take(len),
+//          reference.isEmpty || tokens(len - 1) != reference.head,
+          len == tokens.length || !isWhitespace(tokens(len))
+        )
+      }
+      .toList
+      .takeWhile { case (_, keepGoing, _) =>
+        keepGoing
+      }
+      .collect {
+        case (prefixLength, _, keep) if keep => prefixLength
+      }
+      .map { prefixLength =>
+        (
+          tokens.drop(prefixLength),
+          tokens.take(prefixLength)
+        )
+      }
   }
 
 }

@@ -5,45 +5,65 @@ import scala.Console._
 class StringDiff(
   beforeAll: String = RESET,
   beforeNoMatch: String = "[",
-  beforeExpected: String = YELLOW,
+  beforeExpected: String = YELLOW + UNDERLINED,
   afterExpected: String = RESET,
   between: String = "|",
-  beforeActual: String = RED,
+  beforeActual: String = RED + UNDERLINED,
   afterActual: String = RESET,
   afterNoMatch: String = "]",
-  empty: String = "∅",
-  beforeMatch: String = "",
-  afterMatch: String = "",
+  beforeExtra: String = "[" + RED + UNDERLINED,
+  afterExtra: String = RESET + "|∅]",
+  beforeMissing: String = "[∅|" + YELLOW + UNDERLINED,
+  afterMissing: String = RESET + "]",
+  beforeMatch: String = UNDERLINED,
+  afterMatch: String = RESET,
   afterAll: String = ""
 ) {
 
   import Tokens._
 
+  private var prefix = ""
+
+  private def enter[T](label: String, f: => T): T = {
+    println(s"$prefix<$label>")
+    prefix = prefix + "    "
+    val result = f
+    prefix = prefix.substring(0, prefix.length - 4)
+    println(s"$prefix</$label>")
+    result
+  }
+
+  private def log(s: => String): Unit = {
+    println(s"$prefix<m>")
+    println(s"$prefix    $s")
+    println(s"$prefix</m>")
+  }
+
   def apply(
     actual: String,
     expected: String
   ): String = {
-//    println(s"actual: ${tokenize(actual)}")
-//    println(s"expected: ${tokenize(expected)}")
-    val options = diff(tokenize(actual), tokenize(expected), List.empty)
+    val actualTokens   = tokenize(actual)
+    val expectedTokens = tokenize(expected)
+    val options        = diff(actualTokens, expectedTokens, List.empty)
     if (options.isEmpty) {
       "no diff result (probably a bug in app.tulz.stringdiff)"
     } else {
-//      println("options:")
-//      options.foreach { s =>
-//        println(diffToString(s))
-//      }
-      val withMatchLength = options.map { path =>
+      println("diff for:")
+      println(s"'${actual}'")
+      println(s"'${expected}'")
+      println("options:")
+      options.foreach { s =>
+        println(diffToString(s))
+      }
+      val collapsed = options.map(collapse).distinct
+      val withMatchLength = collapsed.map { path =>
         val matchLengths = path.collect { case DiffBlock.Match(s) => s.length }
         path -> matchLengths.sum
       }
       val largestMatch     = withMatchLength.map(_._2).max
       val withLargestMatch = withMatchLength.filter(_._2 == largestMatch).map(_._1)
-      val best             = withLargestMatch.map(diffToString).minBy(_.length)
-//      println("best:")
-//      println(best)
-
-      best
+      withLargestMatch.map(diffToString).minBy(_.replaceAll("\\s+", "").length)
     }
   }
 
@@ -52,11 +72,16 @@ class StringDiff(
     expected: List[String],
     path: List[DiffBlock]
   ): List[List[DiffBlock]] = {
-    tryEnd(actual, expected, path) ++
-      tryCommonPrefix(actual, expected, path) ++
-      tryExtraPrefixInActual(actual, expected, path) ++
-      tryExtraPrefixInExpected(actual, expected, path) ++
-      tryNonMatchingPrefix(actual, expected, path)
+    enter(
+      "diff", {
+        log(s"'${actual.mkString}'")
+        log(s"'${expected.mkString}'")
+        enter("tryEnd", tryEnd(actual, expected, path)) ++
+          enter("tryMatchingPrefix", tryMatchingPrefix(actual, expected, path)) ++
+          enter("tryExtraPrefix", tryExtraPrefix(actual, expected, path)) ++
+          enter("tryMissingPrefix", tryMissingPrefix(actual, expected, path))
+      }
+    )
   }
 
   private def tryEnd(
@@ -64,87 +89,85 @@ class StringDiff(
     expected: List[String],
     path: List[DiffBlock]
   ): List[List[DiffBlock]] = {
-    if (actual.isEmpty || actual.isEmpty != expected.isEmpty) {
-      List(
-        DiffBlock.NoMatch(actual, expected) :: path
-      )
-    } else if (actual.isEmpty || expected.isEmpty) {
-      throw new RuntimeException("looks like you have hit a bug in app.tulz.stringdiff")
+    log(s"'${actual.mkString}'")
+    log(s"'${expected.mkString}'")
+
+    if (actual.isEmpty && expected.isEmpty) {
+      log("--yes--")
+      List(path)
     } else {
+      log("--no--")
       List.empty
     }
   }
 
-  private def tryExtraPrefixInActual(
+  private def tryExtraPrefix(
     actual: List[String],
     expected: List[String],
     path: List[DiffBlock]
   ): List[List[DiffBlock]] = {
-    val (actualTail, actualPrefix) = extraPrefix(actual, expected)
-    if (actualPrefix.isEmpty) {
-      List.empty
-    } else {
-      diff(
-        actualTail,
-        expected,
-        DiffBlock.NoMatch(actualPrefix, List.empty) :: path
-      )
+    log(s"'${actual.mkString}'")
+    log(s"'${expected.mkString}'")
+    extraPrefixes(actual, expected).flatMap { case (actualTail, actualPrefix) =>
+      log("--yes--")
+      log(s"'${actualPrefix.mkString}'")
+      val newPath = DiffBlock.Extra(actualPrefix) :: path
+      enter("tryEnd", tryEnd(actualTail, expected, path)) ++
+        enter("tryMatchingPrefix", tryMatchingPrefix(actualTail, expected, newPath)) ++
+        enter("tryMissingPrefix", tryMissingPrefix(actualTail, expected, newPath))
     }
   }
 
-  private def tryExtraPrefixInExpected(
+  private def tryMissingPrefix(
     actual: List[String],
     expected: List[String],
     path: List[DiffBlock]
   ): List[List[DiffBlock]] = {
-    val (expectedTail, expectedPrefix) = extraPrefix(expected, actual)
-    if (expectedPrefix.isEmpty) {
-      List.empty
-    } else {
-      diff(
-        actual,
-        expectedTail,
-        DiffBlock.NoMatch(List.empty, expectedPrefix) :: path
-      )
+    log(s"'${actual.mkString}'")
+    log(s"'${expected.mkString}'")
+
+    extraPrefixes(expected, actual).flatMap { case (expectedTail, expectedPrefix) =>
+      log("--yes--")
+      log(s"'${expectedPrefix.mkString}'")
+      val newPath = DiffBlock.Missing(expectedPrefix) :: path
+      enter("tryEnd", tryEnd(actual, expectedTail, path)) ++
+        enter("tryMatchingPrefix", tryMatchingPrefix(actual, expectedTail, newPath)) ++
+        enter("tryExtraPrefix", tryExtraPrefix(actual, expectedTail, newPath))
     }
   }
 
-  private def tryCommonPrefix(
+  private def tryMatchingPrefix(
     actual: List[String],
     expected: List[String],
     path: List[DiffBlock]
   ): List[List[DiffBlock]] = {
+    log(s"'${actual.mkString}'")
+    log(s"'${expected.mkString}'")
     if (actual.isEmpty || expected.isEmpty) {
+      log("--no--")
       List.empty
     } else {
-      val (actualTail, expectedTail, prefix) = matchingPrefix(actual, expected)
+      val (actualTail, expectedTail, prefix) = matchingPrefixes(actual, expected)
       if (prefix.isEmpty) {
+        log("--no--")
         List.empty
       } else {
-        diff(
-          actualTail,
-          expectedTail,
-          DiffBlock.Match(prefix) :: path
-        )
+        log("--yes--")
+        log(s"'${prefix.mkString}'")
+        val newPath = DiffBlock.Match(prefix) :: path
+        enter("tryEnd", tryEnd(actualTail, expectedTail, newPath)) ++
+          enter("tryExtraPrefix", tryExtraPrefix(actualTail, expectedTail, newPath)) ++
+          enter("tryMissingPrefix", tryMissingPrefix(actualTail, expectedTail, newPath))
+
       }
     }
   }
 
-  private def tryNonMatchingPrefix(
-    actual: List[String],
-    expected: List[String],
-    path: List[DiffBlock]
-  ): List[List[DiffBlock]] = {
-    val (actualTail, expectedTail, actualPrefix, expectedPrefix) = nonMatchingPrefix(actual, expected)
-    if (actualPrefix.isEmpty) {
-      List.empty
-    } else {
-      diff(
-        actualTail,
-        expectedTail,
-        DiffBlock.NoMatch(actualPrefix, expectedPrefix) :: path
-      )
-    }
+  private def collapse(diff: List[DiffBlock]): List[DiffBlock] = diff match {
+    case Nil                                                            => Nil
+    case DiffBlock.Missing(expected) :: DiffBlock.Extra(actual) :: tail => DiffBlock.NoMatch(actual, expected) :: collapse(tail)
+    case DiffBlock.Extra(actual) :: DiffBlock.Missing(expected) :: tail => DiffBlock.NoMatch(actual, expected) :: collapse(tail)
+    case head :: tail                                                   => head :: collapse(tail)
   }
 
   private def diffToString(diff: List[DiffBlock]): String = {
@@ -159,25 +182,27 @@ class StringDiff(
           buffer.toString
         case DiffBlock.NoMatch(actual, expected) =>
           val buffer = new StringBuffer
-          if (actual.nonEmpty || expected.nonEmpty) {
-            buffer.append(beforeNoMatch)
-            buffer.append(beforeExpected)
-            if (expected.nonEmpty) {
-              expected.foreach(buffer.append)
-            } else {
-              buffer.append(empty)
-            }
-            buffer.append(afterExpected)
-            buffer.append(between)
-            buffer.append(beforeActual)
-            if (actual.nonEmpty) {
-              actual.foreach(buffer.append)
-            } else {
-              buffer.append(empty)
-            }
-            buffer.append(afterActual)
-            buffer.append(afterNoMatch)
-          }
+          buffer.append(beforeNoMatch)
+          buffer.append(beforeExpected)
+          expected.foreach(buffer.append)
+          buffer.append(afterExpected)
+          buffer.append(between)
+          buffer.append(beforeActual)
+          actual.foreach(buffer.append)
+          buffer.append(afterActual)
+          buffer.append(afterNoMatch)
+          buffer.toString
+        case DiffBlock.Extra(actual) =>
+          val buffer = new StringBuffer
+          buffer.append(beforeExtra)
+          actual.foreach(buffer.append)
+          buffer.append(afterExtra)
+          buffer.toString
+        case DiffBlock.Missing(expected) =>
+          val buffer = new StringBuffer
+          buffer.append(beforeMissing)
+          expected.foreach(buffer.append)
+          buffer.append(afterMissing)
           buffer.toString
       }.mkString,
       afterAll
@@ -196,7 +221,10 @@ object StringDiff {
     between = "",
     beforeActual = "<actual>",
     afterActual = "</actual>",
-    empty = "<empty/>",
+    beforeExtra = "<extra>",
+    afterExtra = "</extra>",
+    beforeMissing = "<missing>",
+    afterMissing = "</missing>",
     afterNoMatch = "</no-match>",
     beforeMatch = "<match>",
     afterMatch = "</match>",
