@@ -51,17 +51,15 @@ object Tokens {
       .map { len =>
         (
           len,
-          tokens.take(len) != reference.take(len),
-//          reference.isEmpty || tokens(len - 1) != reference.head,
-          len == tokens.length || !isWhitespace(tokens(len))
+          tokens.take(len) != reference.take(len)
         )
       }
       .toList
-      .takeWhile { case (_, keepGoing, _) =>
+      .takeWhile { case (_, keepGoing) =>
         keepGoing
       }
-      .collect {
-        case (prefixLength, _, keep) if keep => prefixLength
+      .map { case (prefixLength, _) =>
+        prefixLength
       }
       .map { prefixLength =>
         (
