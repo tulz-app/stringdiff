@@ -1,259 +1,339 @@
 ![Maven Central](https://img.shields.io/maven-central/v/app.tulz/stringdiff_sjs1_2.13.svg)
 
-### app.tulz.diff
+## app.tulz.diff
 
-A library for diff-ing strings.
+Myers diff algorithm in Scala. 
+
 
 ```scala
-"app.tulz" %%% "stringdiff" % "0.2.0" 
+"app.tulz" %%% "stringdiff" % "0.3.0" 
 ```
+
+### Overview
+
+The core algorithm is a Scala translation of the Python implementation described here:
+https://blog.robertelder.org/diff-algorithm/
+
+Additionally, the following is implemented on top of it:
+
+* interpretation of the algorithms output
+* customizable formatting of the interpreted result into a string (with a few provided out of the box formatters)  
+* additional transformations for when the input is expected to be a sequence of tokens (`TokenDiff`)
+
+
+### Interpretation
+
+The core algorithm outputs a set of instructions to get from `SeqA` to `SeqB`, something like this:
+
+```
+to get from s1="bcdefgzio" to s2="abcxyfgi"):
+
+Insert a from s2 before position 0 into s1.
+Delete d from s1 at position 2 in s1.
+Insert x from s2 before position 3 into s1.
+Insert y from s2 before position 3 into s1.
+Delete e from s1 at position 3 in s1.
+Delete z from s1 at position 6 in s1.
+Delete o from s1 at position 8 in s1.
+```
+
+It's hard to work with it. Also, it is somewhat tricky at first to understand how to follow these instructions (try it! :) ).
+
+`MyersInterpret` object parses the raw output into a `List[DiffElement]`:
+
+```scala
+trait DiffElement[Repr]
+
+object DiffElement {
+  final case class InBoth[Repr](v: Repr)        extends DiffElement[Repr]
+  final case class InFirst[Repr](v: Repr)       extends DiffElement[Repr]
+  final case class InSecond[Repr](v: Repr)      extends DiffElement[Repr]
+  final case class Diff[Repr](x: Repr, y: Repr) extends DiffElement[Repr]
+}
+```
+
+The result of the interpretation (without any transformations applied) for the same example:
+
+```
+  println(
+    StringDiff
+      .raw(
+        "bcdefgzio",
+        "abcxyfgi",
+        collapse = false
+      ).mkString("[\n  ", "\n  ", "\n]")
+  )
+
+[
+  InSecond(a)
+  InBoth(bc)
+  InFirst(d)
+  InSecond(x)
+  InSecond(y)
+  InFirst(e)
+  InBoth(fg)
+  InFirst(z)
+  InBoth(i)
+  InFirst(o)
+]
+```
+
+### Collapsing
+
+By default, diff functions will collapse the diff:
+
+```
+  println(
+    StringDiff
+      .raw(
+        "bcdefgzio",
+        "abcxyfgi",
+        collapse = true // default is true
+      ).mkString("[\n  ", "\n  ", "\n]")
+  )
+
+[
+  InSecond(a)
+  InBoth(bc)
+  Diff(de,xy)
+  InBoth(fg)
+  InFirst(z)
+  InBoth(i)
+  InFirst(o)
+]
+
+Here, the following list of DiffElements:
+
+[
+  InFirst(d)
+  InSecond(x)
+  InSecond(y)
+  InFirst(e)
+]
+
+got collapsed into a single one:
+ 
+[
+  Diff(de,xy)
+]
+```
+
+In a nutshell, collapsing removes empty elements and joins same or otherwise "joinable" subsequent `DiffElements`.
+
+Examples:
+* any `InFirst`, `InLast`, `Diff` or `InBoth` gets removed if the element is empty
+* `Diff` becomes `InFirst` or `InSecond` if one the elements is empty
+* `InFirst(a)+InFirst(b) -> InFirst(ab)`
+* `InFirst(a)+InSecond(b) -> Diff(a,b)`
+* `InSecond(a)+InDiff(b,c) -> Diff(ab,c\)`
+* etc
+
+### Diff'ing sequences:
+
+```
+  println(
+    SeqDiff
+      .seq(
+        Seq(1, 2, 3, 4, 5).toIndexedSeq,
+        Seq(1, 2, 8, 3, 8, 4, 5, 0).toIndexedSeq
+      ).mkString("[\n  ", "\n  ", "\n]")
+  )
+  
+[
+  InBoth(Vector(1, 2))
+  InSecond(Vector(8))
+  InBoth(Vector(3))
+  InSecond(Vector(8))
+  InBoth(Vector(4, 5))
+  InSecond(Vector(0))
+]
+```
+
+### Diff'ing strings:
+
+Raw diff:
+
+```scala
+  println(
+    StringDiff.diff(
+      "bcdefgzio",
+      "abcxyfgi"
+    )
+  )
+```
+```  
+[
+  InSecond(a)
+  InBoth(bc)
+  Diff(de,xy)
+  InBoth(fg)
+  InFirst(z)
+  InBoth(i)
+  InFirst(o)
+]  
+```
+
+Text output:
+
+```scala
+  println(
+    StringDiff.text(
+      "bcdefgzio",
+      "abcxyfgi"
+    )
+  )
+```
+
+```
+[∅|a]]bc][de|xy]]fg][z|∅]]i][o|∅]
+```
+
+ANSI color output:
+
+```scala
+  println(
+    StringDiff.ansi(
+      "bcdefgzio",
+      "abcxyfgi"
+    )
+  )
+```
+
+![screenshot1](doc/images/screenshot1.png)
+
+(default formatters highlight missing text with yellow, extraneous text — with red, and matching text is underlined)
+
+### Diff'ing tokens
+
+When the inputs are strings that are expected to contain whitespace-separated tokens, `TokenDiff` 
+will try to make the diff more comprehensible in terms of tokens (while preserving the accuracy).
+
+```scala
+  println(
+    TokenDiff.ansi(
+      "match-1 match-2 diff-1 diff-2 match-3 match-4 diff-1 diff-2 match-1 match-2 diff-1 match-3 match-4 diff-1 match-1 match-2 diff-1 match-3 match-4 suffix-1",
+      "prefix-1 match-1 match-2 diff-3 match-3 match-4 match-1 match-2 diff-2 diff-3 match-3 match-4 diff-2 match-1 match-2 match-3 match-4"
+    )    
+  )
+```
+
+![screenshot3](doc/images/screenshot3.png)
+
+With a `StringDiff` the output would look like the following:
+
+```scala
+  println(
+    StringDiff.ansi(
+      "match-1 match-2 diff-1 diff-2 match-3 match-4 diff-1 diff-2 match-1 match-2 diff-1 match-3 match-4 diff-1 match-1 match-2 diff-1 match-3 match-4 suffix-1",
+      "prefix-1 match-1 match-2 diff-3 match-3 match-4 match-1 match-2 diff-2 diff-3 match-3 match-4 diff-2 match-1 match-2 match-3 match-4"
+    )    
+  )
+```
+![screenshot4](doc/images/screenshot3.png)
+
+Inline diffs for both strings:
+
+```scala
+  println(
+    TokenDiff.ansiBoth(
+      "match-1 match-2 diff-1 diff-2 match-3 match-4 diff-1 diff-2 match-1 match-2 diff-1 match-3 match-4 diff-1 match-1 match-2 diff-1 match-3 match-4 suffix-1",
+      "prefix-1 match-1 match-2 diff-3 match-3 match-4 match-1 match-2 diff-2 diff-3 match-3 match-4 diff-2 match-1 match-2 match-3 match-4"
+    )    
+  )
+```
+
+![screenshot3](doc/images/screenshot5.png)
+
 
 ### Usage
 
-#### Output with ANSI colors:
-
-```scala
-import app.tulz.diff._
-
-StringDiff("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")
-// or 
-StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")(AnsiColorDiffFormat)
+Diff'ing `Seq`s:
 ```
-
-![screenshot 1](doc/images/screenshot1.png)
-
-#### Output without colors
-
-```scala
-import app.tulz.diff._
-
-StringDiff.text("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")
-// or 
-StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")(TextDiffFormat)
-```
-
-```
-[prefix |∅]common1 common2 [inside1|inside2] common3 [∅|suffix]
-```
-
-#### Raw AST
-
-```scala
-import app.tulz.diff._
-
-StringDiff.raw("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix") // List[DiffBlock]
-// OR
-StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 common3 suffix")(RawDiffFormat) // List[DiffBlock]
-```
-
-```scala
-List(
-  Extra(List("prefix", " ")), 
-  Match(List("common1", " ", "common2", " ")), 
-  Different(List("inside1"),List("inside2")), 
-  Match(List(" ", "common3", " ")), 
-  Missing(List("suffix"))
+SeqDiff.seq(
+  Seq(1, 2, 3),
+  Seq(2, 3, 4)
 )
 ```
 
-#### Custom format
+Diff'ing `Strings`s:
+
+```
+StringDiff.ansi("abc", "acb")
+// OR
+StringDiff("abc", "acb")
+
+StringDiff.ansiBoth("abc", "acb")
+StringDiff.text("abc", "acb")
+StringDiff.diff("abc", "acb")
+StringDiff.raw("abc", "acb")
+```
+
+
+Diff'ing `Strings`s with tokens:
+
+```
+TokenDiff.ansi("abc", "acb")
+// OR
+TokenDiff("abc", "acb")
+
+TokenDiff.ansiBoth("abc", "acb")
+TokenDiff.text("abc", "acb")
+TokenDiff.diff("abc", "acb")
+TokenDiff.raw("abc", "acb")
+```
+
+
+### Custom formatters
+
+Formatters are instances of the `DiffFormat[Out]` trait:
 
 ```scala
-import app.tulz.diff.StringDiff
-import scala.Console._
+trait DiffFormat[Out] {
 
-val customFormat: DiffFormat[String] = (diff: List[DiffBlock]) =>
-  diff.map {
-    case DiffBlock.Match(m)                    => m.mkString
-    case DiffBlock.Missing(expected)           => s"[missing: ${YELLOW}${expected.mkString}${RESET}]"
-    case DiffBlock.Extra(actual)               => s"[extra: ${RED}${actual.mkString}${RESET}]"
-    case DiffBlock.Different(actual, expected) => s"[expected: ${YELLOW}${expected.mkString}${RESET}, actual: ${RED}${actual.mkString}${RESET}]"
-  }.mkString
+  def apply(diff: List[DiffElement[String]]): Out
 
-StringDiff.withFormat("prefix common1 common2 inside1 common3 common4", "common1 common2 inside2 inside3 common3 suffix")(customFormat)
-StringDiff.withFormat("common1 common2 inside1 inside2 common3 common4 suffix", "prefix common1 common2 inside3 common3")(customFormat)
+}
 ```
 
-![screenshot 2](doc/images/screenshot2.png)
-
-### Examples
-
 ```
-token1 token2 token3
-token1 token2 token3
+object MyFormat extends DiffFormat[MyDiffOutput] { ... }
+
+val diff: MyDiffOutput = MyFormat(StringDiff("abc", "acb"))
 ```
 
-<pre style="background-color: #222">
-<span>token1 token2 token3</span>
-</pre>
+For example, the `TextDiffFormat` is implemented like this:
 
----
+```scala
+object TextDiffFormat extends DiffFormat[String] {
 
+  import DiffElement._
+
+  def apply(diff: List[DiffElement[String]]): String = {
+    val sb = new StringBuilder
+    diff.foreach {
+      case InBoth(both) =>
+        sb.append("]")
+        sb.appendAll(both)
+        sb.append("]")
+      case InSecond(second) =>
+        sb.append("[∅|")
+        sb.appendAll(second)
+        sb.append("]")
+      case InFirst(first) =>
+        sb.append("[")
+        sb.appendAll(first)
+        sb.append("|∅]")
+      case Diff(first, second) =>
+        sb.append("[")
+        sb.appendAll(first)
+        sb.append("|")
+        sb.appendAll(second)
+        sb.append("]")
+      case _ =>
+    }
+    sb.toString()
+  }
 ```
-prefix1 match1 match2 match3
-prefix2 match1 match2 match3
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">prefix2</span>|<span style="color:#A00">prefix1</span>] match1 match2 match3
-</pre>
-
----
-
-```
-match1 match2 match3 suffix1
-match1 match2 match3 suffix2
-```
-
-<pre style="background-color: #222">
-match1 match2 match3 [<span style="color:#A50">suffix2</span>|<span style="color:#A00">suffix1</span>]
-</pre>
-
----
-
-```
-match1 match2 inside1 match3
-match1 match2 inside2 match3
-```
-
-<pre style="background-color: #222">
-match1 match2 [<span style="color:#A50">inside2</span>|<span style="color:#A00">inside1</span>] match3
-</pre>
-
----
-
-```
-prefix1 match1 match2 inside1 match3 suffix1
-prefix2 match1 match2 inside2 match3 suffix2
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">prefix2</span>|<span style="color:#A00">prefix1</span>] match1 match2 [<span style="color:#A50">inside2</span>|<span style="color:#A00">inside1</span>] match3 [<span style="color:#A50">suffix2</span>|<span style="color:#A00">suffix1</span>]
-</pre>
-
----
-
-```
-prefix1 match1 match2 match3
-match1 match2 match3
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">∅</span>|<span style="color:#A00">prefix1 </span>]match1 match2 match3
-</pre>
-
----
-
-```
-match1 match2 match3
-prefix1 match1 match2 match3
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">prefix1 </span>|<span style="color:#A00">∅</span>]match1 match2 match3
-</pre>
-
----
-
-```
-match1 match2 match3 suffix1
-match1 match2 match3
-```
-
-<pre style="background-color: #222">
-match1 match2 match3[<span style="color:#A50">∅</span>|<span style="color:#A00"> suffix1</span>]
-</pre>
-
----
-
-```
-match1 match2 match3
-match1 match2 match3 suffix1
-```
-
-<pre style="background-color: #222">
-match1 match2 match3[<span style="color:#A50"> suffix1</span>|<span style="color:#A00">∅</span>]
-</pre>
-
----
-
-```
-prefix1 match1 match2 match3 suffix1
-match1 match2 match3
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">∅</span>|<span style="color:#A00">prefix1 </span>]match1 match2 match3[<span style="color:#A50">∅</span>|<span style="color:#A00"> suffix1</span>]
-</pre>
-
----
-
-```
-prefix1 match1 match2 match3 suffix1
-match1 match2 match3
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">∅</span>|<span style="color:#A00">prefix1 </span>]match1 match2 match3[<span style="color:#A50">∅</span>|<span style="color:#A00"> suffix1</span>]
-</pre>
-
----
-
-```
-match1 match2 match3
-prefix1 match1 match2 match3 suffix1
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">prefix1 </span>|<span style="color:#A00">∅</span>]match1 match2 match3[<span style="color:#A50"> suffix1</span>|<span style="color:#A00">∅</span>]
-</pre>
-
----
-
-```
-prefix1 match1 match2 inside1 match3 match4 suffix1
-match1 match2 match3 match4
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">∅</span>|<span style="color:#A00">prefix1 </span>]match1 match2 [<span style="color:#A50">∅</span>|<span style="color:#A00">inside1 </span>]match3 match4[<span style="color:#A50">∅</span>|<span style="color:#A00"> suffix1</span>]
-</pre>
-
----
-
-```
-match1 match2 match3 match4
-prefix1 match1 match2 inside1 match3 match4 suffix1
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">prefix1 </span>|<span style="color:#A00">∅</span>]match1 match2 [<span style="color:#A50">inside1 </span>|<span style="color:#A00">∅</span>]match3 match4[<span style="color:#A50"> suffix1</span>|<span style="color:#A00">∅</span>]
-</pre>
-
----
-
-```
-match1 match2 inside1 match3 match4
-prefix1 match1 match2 match3 match4 suffix1
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">prefix1 </span>|<span style="color:#A00">∅</span>]match1 match2 [<span style="color:#A50">∅</span>|<span style="color:#A00">inside1 </span>]match3 match4[<span style="color:#A50"> suffix1</span>|<span style="color:#A00">∅</span>]
-</pre>
-
----
-
-```
-prefix1 match1 match2 match3 match4 suffix1
-match1 match2 inside1 match3 match4
-```
-
-<pre style="background-color: #222">
-[<span style="color:#A50">∅</span>|<span style="color:#A00">prefix1 </span>]match1 match2 [<span style="color:#A50">inside1 </span>|<span style="color:#A00">∅</span>]match3 match4[<span style="color:#A50">∅</span>|<span style="color:#A00"> suffix1</span>]
-</pre>
-
----
-
 
 
 ## Author

@@ -29,7 +29,6 @@ lazy val stringdiff =
     .in(file("stringdiff"))
     .settings(
       scalaVersion := "2.13.4",
-      crossScalaVersions := Seq("2.12.12", "2.13.4"),
       scalacOptions := Seq(
         "-unchecked",
         "-deprecation",
