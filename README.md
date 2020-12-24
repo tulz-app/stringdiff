@@ -16,7 +16,7 @@ https://blog.robertelder.org/diff-algorithm/
 
 Additionally, the following is implemented on top of it:
 
-* interpretation of the algorithms output
+* interpretation of the algorithm's output
 * customizable formatting of the interpreted result into a string (with a few provided out of the box formatters)  
 * additional transformations for when the input is expected to be a sequence of tokens (`TokenDiff`)
 
@@ -103,7 +103,7 @@ StringDiff
 ]
 ```
 
-Here, the following list of DiffElements:
+Here, the following list of `DiffElement`s:
 
 ```
 [
@@ -122,7 +122,7 @@ got collapsed into a single one:
 ]
 ```
 
-In a nutshell, collapsing removes empty elements and joins same or otherwise "joinable" subsequent `DiffElements`.
+In a nutshell, collapsing removes empty elements and joins same or otherwise "join-able" subsequent `DiffElement`s.
 
 Examples:
 * any `InFirst`, `InLast`, `Diff` or `InBoth` gets removed if the element is empty
@@ -155,7 +155,7 @@ SeqDiff
 
 ### Diff'ing strings:
 
-Raw diff:
+##### Raw diff AST:
 
 ```scala
   println(
@@ -178,7 +178,7 @@ Raw diff:
 ]  
 ```
 
-Text output:
+##### Text output:
 
 ```scala
   println(
@@ -193,7 +193,7 @@ Text output:
 [∅|a]]bc][de|xy]]fg][z|∅]]i][o|∅]
 ```
 
-ANSI color output:
+##### ANSI color output:
 
 ```scala
   println(
@@ -236,7 +236,7 @@ With a `StringDiff` the output would look like the following:
 ```
 ![screenshot4](doc/images/screenshot3.png)
 
-Inline diffs for both strings:
+##### Inline diffs for both strings 
 
 ```scala
   println(
@@ -252,7 +252,8 @@ Inline diffs for both strings:
 
 ### Usage
 
-Diff'ing `Seq`s:
+##### Diff'ing `Seq`s:
+
 ```
 SeqDiff.seq(
   Seq(1, 2, 3),
@@ -260,7 +261,7 @@ SeqDiff.seq(
 )
 ```
 
-Diff'ing `Strings`s:
+##### Diff'ing `Strings`s:
 
 ```
 StringDiff.ansi("abc", "acb")
@@ -274,7 +275,7 @@ StringDiff.raw("abc", "acb")
 ```
 
 
-Diff'ing `Strings`s with tokens:
+##### Diff'ing `Strings`s with tokens:
 
 ```
 TokenDiff.ansi("abc", "acb")
@@ -300,7 +301,7 @@ trait DiffFormat[Out] {
 }
 ```
 
-```
+```scala
 object MyFormat extends DiffFormat[MyDiffOutput] { ... }
 
 val diff: MyDiffOutput = MyFormat(StringDiff("abc", "acb"))
@@ -339,7 +340,6 @@ object TextDiffFormat extends DiffFormat[String] {
     sb.toString()
   }
 ```
-
 
 ## Author
 
