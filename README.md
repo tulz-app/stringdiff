@@ -26,7 +26,7 @@ Additionally, the following is implemented on top of it:
 The core algorithm outputs a set of instructions to get from `SeqA` to `SeqB`, something like this:
 
 ```
-to get from s1="bcdefgzio" to s2="abcxyfgi"):
+in order to get from s1="bcdefgzio" to s2="abcxyfgi":
 
 Insert a from s2 before position 0 into s1.
 Delete d from s1 at position 2 in s1.
@@ -54,16 +54,16 @@ object DiffElement {
 
 The result of the interpretation (without any transformations applied) for the same example:
 
+```scala
+StringDiff
+  .raw(
+    "bcdefgzio",
+    "abcxyfgi",
+    collapse = false
+  ).mkString("[\n  ", "\n  ", "\n]")
 ```
-  println(
-    StringDiff
-      .raw(
-        "bcdefgzio",
-        "abcxyfgi",
-        collapse = false
-      ).mkString("[\n  ", "\n  ", "\n]")
-  )
 
+```
 [
   InSecond(a)
   InBoth(bc)
@@ -82,16 +82,16 @@ The result of the interpretation (without any transformations applied) for the s
 
 By default, diff functions will collapse the diff:
 
+```scala
+StringDiff
+  .raw(
+    "bcdefgzio",
+    "abcxyfgi",
+    collapse = true // default is true
+  ).mkString("[\n  ", "\n  ", "\n]")
 ```
-  println(
-    StringDiff
-      .raw(
-        "bcdefgzio",
-        "abcxyfgi",
-        collapse = true // default is true
-      ).mkString("[\n  ", "\n  ", "\n]")
-  )
 
+```
 [
   InSecond(a)
   InBoth(bc)
@@ -101,18 +101,22 @@ By default, diff functions will collapse the diff:
   InBoth(i)
   InFirst(o)
 ]
+```
 
 Here, the following list of DiffElements:
 
+```
 [
   InFirst(d)
   InSecond(x)
   InSecond(y)
   InFirst(e)
 ]
+```
 
 got collapsed into a single one:
- 
+
+```
 [
   Diff(de,xy)
 ]
@@ -130,15 +134,15 @@ Examples:
 
 ### Diff'ing sequences:
 
+```scala
+SeqDiff
+  .seq(
+    Seq(1, 2, 3, 4, 5).toIndexedSeq,
+    Seq(1, 2, 8, 3, 8, 4, 5, 0).toIndexedSeq
+  ).mkString("[\n  ", "\n  ", "\n]")
 ```
-  println(
-    SeqDiff
-      .seq(
-        Seq(1, 2, 3, 4, 5).toIndexedSeq,
-        Seq(1, 2, 8, 3, 8, 4, 5, 0).toIndexedSeq
-      ).mkString("[\n  ", "\n  ", "\n]")
-  )
-  
+
+```
 [
   InBoth(Vector(1, 2))
   InSecond(Vector(8))
@@ -161,6 +165,7 @@ Raw diff:
     )
   )
 ```
+
 ```  
 [
   InSecond(a)
