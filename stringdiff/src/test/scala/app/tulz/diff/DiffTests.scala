@@ -24,7 +24,7 @@ class DiffTests extends AnyFunSuite with Matchers {
     val dashes = 80
     test(name) {
       println(s"--- ${name} ${"-" * (dashes - name.length - 5)}")
-      val result = TokenDiff.raw(s1.clean, s2.clean)
+      val result = TokenDiff.diff(s1.clean, s2.clean)
       if (result != expectedDiff) {
         println(s"| ${RED_B}${BLACK} ! failed ! ${RESET}")
       }

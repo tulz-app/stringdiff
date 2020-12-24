@@ -2,10 +2,6 @@
 
 ### 0.3.1
 
-Minor: renamed diff functions' parameters.
-
-### 0.3.0
-
 Myers algorithm.
 
 ### 0.2.0
