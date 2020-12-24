@@ -129,7 +129,7 @@ Examples:
 * `Diff` becomes `InFirst` or `InSecond` if one the elements is empty
 * `InFirst(a)+InFirst(b) -> InFirst(ab)`
 * `InFirst(a)+InSecond(b) -> Diff(a,b)`
-* `InSecond(a)+InDiff(b,c) -> Diff(ab,c\)`
+* `InSecond(a)+InDiff(b,c) -> Diff(ab,c)`
 * etc
 
 ### Diff'ing sequences:
