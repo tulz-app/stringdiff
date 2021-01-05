@@ -15,7 +15,8 @@ ThisBuild / pomIncludeRepository := { _ => false }
 ThisBuild / sonatypeProfileName := "yurique"
 ThisBuild / publishArtifact in Test := false
 ThisBuild / publishMavenStyle := true
-ThisBuild / releaseCrossBuild := true
+ThisBuild / releaseCrossBuild := false
+ThisBuild / crossScalaVersions := Seq("2.13.4")
 
 lazy val noPublish = Seq(
   publishLocal / skip := true,
@@ -55,6 +56,9 @@ lazy val stringdiff =
 lazy val root = project
   .in(file("."))
   .settings(noPublish)
+  .settings(
+    name := "app.tulz.stringdiff"
+  )
   .aggregate(
     stringdiff.js,
     stringdiff.jvm
