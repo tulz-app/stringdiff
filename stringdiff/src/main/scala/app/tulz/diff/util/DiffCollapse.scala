@@ -5,6 +5,8 @@ import app.tulz.diff.DiffElement.Diff
 import app.tulz.diff.DiffElement.InBoth
 import app.tulz.diff.DiffElement.InFirst
 import app.tulz.diff.DiffElement.InSecond
+import scala.collection.compat._
+import app.tulz.diff.compat._
 
 import scala.collection.IndexedSeqView
 

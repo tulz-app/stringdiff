@@ -1,6 +1,8 @@
 package app.tulz.diff
 
 import app.tulz.diff.util.DiffCollapse
+import scala.collection.compat._
+import app.tulz.diff.compat._
 
 import scala.collection.IndexedSeqView
 
@@ -11,7 +13,7 @@ object SeqDiff {
     s2: IndexedSeq[A],
     collapse: Boolean = true
   ): List[DiffElement[IndexedSeq[A]]] =
-    apply(s1.view, s2.view, collapse).map(_.map(_.toIndexedSeq))
+    apply(s1.indexedView, s2.indexedView, collapse).map(_.map(_.toIndexedSeq))
 
   def apply[A](
     s1: IndexedSeqView[A],

@@ -15,8 +15,9 @@ ThisBuild / pomIncludeRepository := { _ => false }
 ThisBuild / sonatypeProfileName := "yurique"
 ThisBuild / publishArtifact in Test := false
 ThisBuild / publishMavenStyle := true
-ThisBuild / releaseCrossBuild := false
-ThisBuild / crossScalaVersions := Seq("2.13.4")
+ThisBuild / releaseCrossBuild := true
+ThisBuild / scalaVersion := "2.12.12"
+ThisBuild / crossScalaVersions := Seq("2.13.4", "2.12.12")
 
 lazy val noPublish = Seq(
   publishLocal / skip := true,
@@ -29,7 +30,6 @@ lazy val stringdiff =
     .crossType(CrossType.Pure)
     .in(file("stringdiff"))
     .settings(
-      scalaVersion := "2.13.4",
       scalacOptions := Seq(
         "-unchecked",
         "-deprecation",
@@ -42,7 +42,8 @@ lazy val stringdiff =
         "utf8"
       ),
       libraryDependencies ++= Seq(
-        "org.scalatest" %%% "scalatest" % "3.2.0" % Test
+        "org.scala-lang.modules" %%% "scala-collection-compat" % "2.3.2",
+        "org.scalatest"          %%% "scalatest"               % "3.2.0" % Test
       ),
       description := "String diff for scala.",
       scmInfo := Some(

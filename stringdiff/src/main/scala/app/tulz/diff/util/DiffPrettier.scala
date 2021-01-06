@@ -3,6 +3,8 @@ package app.tulz.diff.util
 import app.tulz.diff.DiffElement
 import app.tulz.diff.DiffElement.Diff
 import app.tulz.diff.DiffElement.InBoth
+import app.tulz.diff.compat._
+import scala.collection.compat._
 
 private[diff] object DiffPrettier {
 

@@ -2,6 +2,8 @@ package app.tulz.diff
 
 import app.tulz.diff.format.DiffFormat
 import app.tulz.diff.util.DiffCollapse
+import scala.collection.compat._
+import app.tulz.diff.compat._
 
 object StringDiff {
 
@@ -37,8 +39,8 @@ object StringDiff {
     s2: String,
     collapse: Boolean = true
   ): List[DiffElement[String]] = {
-    val myersDiff = MyersDiff.diff(s1.view, s2.view)
-    val diff      = MyersInterpret(myersDiff, s1.view, s2.view)
+    val myersDiff = MyersDiff.diff(s1.indexedView, s2.indexedView)
+    val diff      = MyersInterpret(myersDiff, s1.indexedView, s2.indexedView)
     val result = if (collapse) {
       DiffCollapse(diff)
     } else {
