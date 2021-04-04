@@ -15,11 +15,11 @@ private[diff] object DiffPrettier {
           val (prefix, firstRest1, secondRest1) = sameWhitespacePrefix(first, second)
           val (firstRest2, secondRest2, suffix) = sameWhitespaceSuffix(firstRest1, secondRest1)
           if (prefix.nonEmpty && suffix.nonEmpty) {
-            (InBoth(prefix) :: Diff(firstRest2, secondRest2) :: InBoth(suffix) :: Nil) -> tail
+            (InBoth[String](prefix) :: Diff[String](firstRest2, secondRest2) :: InBoth[String](suffix) :: Nil) -> tail
           } else if (prefix.nonEmpty) {
-            (InBoth(prefix) :: Diff(firstRest2, secondRest2) :: Nil) -> tail
+            (InBoth[String](prefix) :: Diff[String](firstRest2, secondRest2) :: Nil) -> tail
           } else if (suffix.nonEmpty) {
-            (Diff(firstRest2, secondRest2) :: InBoth(suffix) :: Nil) -> tail
+            (Diff[String](firstRest2, secondRest2) :: InBoth[String](suffix) :: Nil) -> tail
           } else {
             (d :: Nil) -> tail
           }
@@ -63,13 +63,6 @@ private[diff] object DiffPrettier {
       .takeWhile(i => i < s2.length && s1.charAt(s1.length - 1 - i) == s2.charAt(s2.length - 1 - i) && s1.charAt(i).isWhitespace)
       .maxOption.fold(0)(_ + 1)
     (s1.dropRight(sameSuffixLength), s2.dropRight(sameSuffixLength), s1.takeRight(sameSuffixLength))
-  }
-
-  private val whitespace = "\\s+".r
-  private object Whitespace {
-    def unapply(s: String): Option[String] = {
-      Some(s).filter(whitespace.matches)
-    }
   }
 
 }

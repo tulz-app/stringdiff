@@ -45,7 +45,6 @@ object AnsiDiffFormat extends DiffFormat[String] {
         sb.appendAll(second)
         sb.append(RESET)
         sb.append("]")
-      case _ =>
     }
 
     sb.toString()

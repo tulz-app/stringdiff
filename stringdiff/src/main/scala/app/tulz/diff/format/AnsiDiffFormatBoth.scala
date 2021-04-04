@@ -32,7 +32,6 @@ object AnsiDiffFormatBoth extends DiffFormat[(String, String)] {
         sb1.append(UNDERLINED)
         sb1.appendAll(first)
         sb1.append(RESET)
-      case _ =>
     }
 
     val sb2 = new StringBuilder
@@ -58,7 +57,6 @@ object AnsiDiffFormatBoth extends DiffFormat[(String, String)] {
         sb2.append(UNDERLINED)
         sb2.appendAll(second)
         sb2.append(RESET)
-      case _ =>
     }
 
     (sb1.toString(), sb2.toString())

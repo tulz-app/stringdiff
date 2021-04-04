@@ -1,5 +1,9 @@
 # Changelog
 
+### 0.3.2
+
+Scala 3-RC2.
+
 ### 0.3.1
 
 Myers algorithm.

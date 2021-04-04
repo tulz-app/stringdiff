@@ -1,22 +1,31 @@
-ThisBuild / organization := "app.tulz"
-ThisBuild / homepage := Some(url("https://github.com/tulz-app/stringdiff"))
-ThisBuild / licenses += ("MIT", url("https://github.com/tulz-app/stringdiff/blob/main/LICENSE.md"))
-ThisBuild / developers := List(
-  Developer(
-    id = "yurique",
-    name = "Iurii Malchenko",
-    email = "i@yurique.com",
-    url = url("https://github.com/yurique")
+inThisBuild(
+  List(
+    organization := "app.tulz",
+    homepage := Some(url("https://github.com/tulz-app/stringdiff")),
+    licenses := List("MIT" -> url("https://github.com/tulz-app/stringdiff/blob/main/LICENSE.md")),
+    scmInfo := Some(ScmInfo(url("https://github.com/tulz-app/stringdiff"), "scm:git@github.com/tulz-app/laminext.git")),
+    developers := List(Developer("yurique", "Iurii Malchenko", "i@yurique.com", url("https://github.com/yurique"))),
+    scalaVersion := ScalaVersions.v213,
+    description := "String diff for Scala",
+    crossScalaVersions := Seq(
+      ScalaVersions.v213,
+      ScalaVersions.v3RC2
+    ),
+    Test / publishArtifact := false,
+    Test / parallelExecution := false,
+    githubWorkflowJavaVersions := Seq("openjdk@1.11.0"),
+    githubWorkflowTargetTags ++= Seq("v*"),
+    githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
+    githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("ci-release"))),
+    githubWorkflowBuild := Seq(WorkflowStep.Sbt(List("test", "website/fastLinkJS"))),
+    githubWorkflowEnv ~= (_ ++ Map(
+      "PGP_PASSPHRASE"    -> s"$${{ secrets.PGP_PASSPHRASE }}",
+      "PGP_SECRET"        -> s"$${{ secrets.PGP_SECRET }}",
+      "SONATYPE_PASSWORD" -> s"$${{ secrets.SONATYPE_PASSWORD }}",
+      "SONATYPE_USERNAME" -> s"$${{ secrets.SONATYPE_USERNAME }}"
+    ))
   )
 )
-ThisBuild / releasePublishArtifactsAction := PgpKeys.publishSigned.value
-ThisBuild / publishTo := sonatypePublishToBundle.value
-ThisBuild / pomIncludeRepository := { _ => false }
-ThisBuild / sonatypeProfileName := "yurique"
-ThisBuild / publishArtifact in Test := false
-ThisBuild / publishMavenStyle := true
-ThisBuild / releaseCrossBuild := false
-ThisBuild / crossScalaVersions := Seq("2.13.4")
 
 lazy val noPublish = Seq(
   publishLocal / skip := true,
@@ -29,27 +38,9 @@ lazy val stringdiff =
     .crossType(CrossType.Pure)
     .in(file("stringdiff"))
     .settings(
-      scalaVersion := "2.13.4",
-      scalacOptions := Seq(
-        "-unchecked",
-        "-deprecation",
-        "-feature",
-        "-Xlint:nullary-unit,inaccessible,infer-any,missing-interpolator,private-shadow,type-parameter-shadow,poly-implicit-overload,option-implicit,delayedinit-select,stars-align",
-        "-Xcheckinit",
-        "-Ywarn-value-discard",
-        "-language:implicitConversions",
-        "-encoding",
-        "utf8"
-      ),
+      ScalaOptions.fixOptions,
       libraryDependencies ++= Seq(
-        "org.scalatest" %%% "scalatest" % "3.2.0" % Test
-      ),
-      description := "String diff for scala.",
-      scmInfo := Some(
-        ScmInfo(
-          url("https://github.com/tulz-app/stringdiff"),
-          "scm:git@github.com/tulz-app/stringdiff.git"
-        )
+        "org.scalatest" %%% "scalatest" % "3.2.7" % Test
       )
     )
 

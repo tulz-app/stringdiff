@@ -27,7 +27,6 @@ object TextDiffFormat extends DiffFormat[String] {
         sb.append("|")
         sb.appendAll(second)
         sb.append("]")
-      case _ =>
     }
     sb.toString()
   }
