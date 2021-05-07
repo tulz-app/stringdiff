@@ -1,5 +1,9 @@
 # Changelog
 
+### 0.3.3
+
+Scala 3-RC3.
+
 ### 0.3.2
 
 Scala 3-RC2.
