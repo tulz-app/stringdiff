@@ -9,7 +9,7 @@ inThisBuild(
     description := "String diff for Scala",
     crossScalaVersions := Seq(
       ScalaVersions.v213,
-      ScalaVersions.v3RC3
+      ScalaVersions.v3
     ),
     Test / publishArtifact := false,
     Test / parallelExecution := false,
@@ -39,7 +39,7 @@ lazy val stringdiff =
     .settings(
       ScalaOptions.fixOptions,
       libraryDependencies ++= Seq(
-        "org.scalatest" %%% "scalatest" % "3.2.8" % Test
+        "org.scalatest" %%% "scalatest" % "3.2.9" % Test
       )
     )
 
