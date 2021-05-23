@@ -8,6 +8,7 @@ inThisBuild(
     scalaVersion := ScalaVersions.v213,
     description := "String diff for Scala",
     crossScalaVersions := Seq(
+      ScalaVersions.v212,
       ScalaVersions.v213,
       ScalaVersions.v3
     ),
@@ -22,7 +23,8 @@ inThisBuild(
       "PGP_SECRET"        -> s"$${{ secrets.PGP_SECRET }}",
       "SONATYPE_PASSWORD" -> s"$${{ secrets.SONATYPE_PASSWORD }}",
       "SONATYPE_USERNAME" -> s"$${{ secrets.SONATYPE_USERNAME }}"
-    ))
+    )),
+    versionScheme := Some("early-semver")
   )
 )
 
@@ -39,7 +41,8 @@ lazy val stringdiff =
     .settings(
       ScalaOptions.fixOptions,
       libraryDependencies ++= Seq(
-        "org.scalatest" %%% "scalatest" % "3.2.9" % Test
+        "org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.4",
+        "org.scalatest"          %%% "scalatest"               % "3.2.9" % Test
       )
     )
 

@@ -3,7 +3,7 @@ package app.tulz.diff
 import app.tulz.diff.MyersDiff.Operation
 
 import scala.collection.mutable.ListBuffer
-import scala.collection.IndexedSeqView
+import compat._
 
 object MyersInterpret {
 
@@ -23,13 +23,13 @@ object MyersInterpret {
       (Start +: ops).zip(ops :+ End).foreach {
         case (Start, Delete(deleteFrom, deleteCount)) =>
           if (deleteFrom > 0) {
-            buffer.addOne(
+            buffer.append(
               InBoth(
                 s1.take(deleteFrom)
               )
             )
           }
-          buffer.addOne(
+          buffer.append(
             InFirst(
               s1.slice(deleteFrom, deleteFrom + deleteCount)
             )
@@ -37,13 +37,13 @@ object MyersInterpret {
 
         case (Start, Insert(insertAt, insertFrom, insertCount)) =>
           if (insertAt > 0) {
-            buffer.addOne(
+            buffer.append(
               InBoth(
                 s1.take(insertFrom)
               )
             )
           }
-          buffer.addOne(
+          buffer.append(
             InSecond(
               s2.slice(insertFrom, insertFrom + insertCount)
             )
@@ -51,13 +51,13 @@ object MyersInterpret {
 
         case (Delete(deleteFrom, deleteCount), Insert(insertAt, insertFrom, insertCount)) =>
           if (insertAt > deleteFrom + deleteCount) {
-            buffer.addOne(
+            buffer.append(
               InBoth(
                 s1.slice(deleteFrom + deleteCount, insertAt)
               )
             )
           }
-          buffer.addOne(
+          buffer.append(
             InSecond(
               s2.slice(insertFrom, insertFrom + insertCount)
             )
@@ -65,13 +65,13 @@ object MyersInterpret {
 
         case (Insert(insertAt, _, _), Delete(deleteFrom, deleteCount)) =>
           if (deleteFrom > insertAt) {
-            buffer.addOne(
+            buffer.append(
               InBoth(
                 s1.slice(insertAt, deleteFrom)
               )
             )
           }
-          buffer.addOne(
+          buffer.append(
             InFirst(
               s1.slice(deleteFrom, deleteFrom + deleteCount)
             )
@@ -79,13 +79,13 @@ object MyersInterpret {
 
         case (Insert(insertAt1, _, _), Insert(insertAt2, insertFrom2, insertCount2)) =>
           if (insertAt2 > insertAt1) {
-            buffer.addOne(
+            buffer.append(
               InBoth(
                 s1.slice(insertAt1, insertAt2)
               )
             )
           }
-          buffer.addOne(
+          buffer.append(
             InSecond(
               s2.slice(insertFrom2, insertFrom2 + insertCount2)
             )
@@ -93,13 +93,13 @@ object MyersInterpret {
 
         case (Delete(deleteFrom1, deleteCount1), Delete(deleteFrom2, deleteCount2)) =>
           if (deleteFrom2 > deleteFrom1 + deleteCount1) {
-            buffer.addOne(
+            buffer.append(
               InBoth(
                 s1.slice(deleteFrom1 + deleteCount1, deleteFrom2)
               )
             )
           }
-          buffer.addOne(
+          buffer.append(
             InFirst(
               s1.slice(deleteFrom2, deleteFrom2 + deleteCount2)
             )
@@ -107,7 +107,7 @@ object MyersInterpret {
 
         case (Insert(insertAt, _, _), End) =>
           if (s1.size > insertAt) {
-            buffer.addOne(
+            buffer.append(
               InBoth(
                 s1.slice(insertAt, s1.size)
               )
@@ -116,7 +116,7 @@ object MyersInterpret {
 
         case (Delete(deleteFrom, deleteCount), End) =>
           if (s1.size > deleteFrom + deleteCount) {
-            buffer.addOne(
+            buffer.append(
               InBoth(
                 s1.slice(deleteFrom + deleteCount, s1.size)
               )

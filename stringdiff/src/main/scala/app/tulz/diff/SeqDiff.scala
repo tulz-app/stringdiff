@@ -1,8 +1,7 @@
 package app.tulz.diff
 
 import app.tulz.diff.util.DiffCollapse
-
-import scala.collection.IndexedSeqView
+import compat._
 
 object SeqDiff {
 

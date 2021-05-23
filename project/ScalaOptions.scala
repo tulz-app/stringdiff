@@ -12,14 +12,9 @@ object ScalaOptions {
         "-Wunused:params"
       )
     )),
-    scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) =>
-        Seq(
-          "-Ymacro-annotations"
-        )
-      case Some((3, _)) => Seq()
-      case _            => Seq()
-    }),
+    scalacOptions ++= CrossVersion.partialVersion(scalaVersion.value).collect { case (2, 13) =>
+      "-Ymacro-annotations"
+    },
     (Compile / doc / scalacOptions) ~= (_.filterNot(
       Set(
         "-scalajs",

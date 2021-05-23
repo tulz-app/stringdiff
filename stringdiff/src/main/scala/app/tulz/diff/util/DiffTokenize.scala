@@ -1,12 +1,13 @@
-package app.tulz.diff.util
+package app.tulz.diff
+package util
 
-import app.tulz.diff.DiffElement
-import app.tulz.diff.DiffElement.InBoth
-import app.tulz.diff.DiffElement.InFirst
-import app.tulz.diff.DiffElement.InSecond
+import DiffElement.InBoth
+import DiffElement.InFirst
+import DiffElement.InSecond
 
 import scala.collection.mutable.ListBuffer
-import scala.collection.IndexedSeqView
+import scala.collection.compat._
+import compat._
 
 private[diff] object DiffTokenize {
 
@@ -17,14 +18,14 @@ private[diff] object DiffTokenize {
   ): List[DiffElement[IndexedSeqView[String]]] = {
     ListScan.withBuffer[DiffElement[IndexedSeqView[String]], DiffElement[IndexedSeqView[String]]](diff) { (list, buffer) =>
       val (nonFirstSecond, firstSecondAndRest) = list.span(!_.inFirstOrSecond)
-      buffer.addAll(nonFirstSecond)
+      buffer.appendAll(nonFirstSecond)
       val (firstSecond, rest) = firstSecondAndRest.span(_.inFirstOrSecond)
       val (first, second)     = firstSecond.partition(p)
       if (first.nonEmpty && second.nonEmpty) {
-        buffer.addAll(transform(first, second))
+        buffer.appendAll(transform(first, second))
       } else {
-        buffer.addAll(first)
-        buffer.addAll(second)
+        buffer.appendAll(first)
+        buffer.appendAll(second)
       }
       rest
     }
@@ -158,7 +159,7 @@ private[diff] object DiffTokenize {
         samePrefix(work1, work2).map { case (prefix, rest1, rest2) =>
           work1 = rest1
           work2 = rest2
-          buffer.addAll(prefix)
+          buffer.appendAll(prefix)
         }
         sameSuffix(work1, work2).foreach { case (rest1, rest2, suffix) =>
           work1 = rest1
@@ -168,25 +169,25 @@ private[diff] object DiffTokenize {
 
         prefixIsSuffix(work1, work2)
           .map { case (prefixSuffix, rest1, rest2) =>
-            buffer.addAll(rest2)
-            buffer.addAll(prefixSuffix)
-            buffer.addAll(rest1)
-            buffer.addAll(bufferSuffix)
+            buffer.appendAll(rest2)
+            buffer.appendAll(prefixSuffix)
+            buffer.appendAll(rest1)
+            buffer.appendAll(bufferSuffix)
             ()
           }
           .orElse {
             suffixIsPrefix(work1, work2).map { case (rest1, rest2, suffixPrefix) =>
-              buffer.addAll(rest1)
-              buffer.addAll(suffixPrefix)
-              buffer.addAll(rest2)
-              buffer.addAll(bufferSuffix)
+              buffer.appendAll(rest1)
+              buffer.appendAll(suffixPrefix)
+              buffer.appendAll(rest2)
+              buffer.appendAll(bufferSuffix)
               ()
             }
           }
           .getOrElse {
-            buffer.addAll(work1)
-            buffer.addAll(work2)
-            buffer.addAll(bufferSuffix)
+            buffer.appendAll(work1)
+            buffer.appendAll(work2)
+            buffer.appendAll(bufferSuffix)
             ()
           }
 
@@ -269,7 +270,7 @@ private[diff] object DiffTokenize {
   private val whitespace = "\\s+".r
   private object Whitespace {
     def unapply(s: IndexedSeqView[String]): Option[IndexedSeqView[String]] = {
-      Some(s).filter(_.forall(whitespace.matches))
+      Some(s).filter(_.forall(whitespace.findFirstMatchIn(_).isDefined))
     }
   }
 

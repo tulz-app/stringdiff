@@ -7,7 +7,7 @@ private[diff] object ListScan {
   def apply[A, B](list: List[A])(f: List[A] => (List[B], List[A])): List[B] = {
     withBuffer[A, B](list) { (list, buffer) =>
       val (toBuffer, newWork) = f(list)
-      buffer.addAll(toBuffer)
+      buffer.appendAll(toBuffer)
       newWork
     }
   }

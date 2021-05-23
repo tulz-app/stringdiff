@@ -1,6 +1,6 @@
 package app.tulz.diff
 
-import scala.collection.IndexedSeqView
+import compat._
 
 object MyersDiff {
 
@@ -79,7 +79,7 @@ object MyersDiff {
         }
       }
     }
-    rec(ss1.toIndexedSeq.view, ss2.toIndexedSeq.view, 0, 0)
+    rec(ss1, ss2, 0, 0)
   }
 
   sealed trait Operation extends Product with Serializable

@@ -1,9 +1,8 @@
-package app.tulz.diff.util
+package app.tulz.diff
+package util
 
-import app.tulz.diff.DiffElement
-import app.tulz.diff.format.DiffFormat
-
-import scala.collection.IndexedSeqView
+import format.DiffFormat
+import compat._
 
 private[diff] object DiffLog {
 

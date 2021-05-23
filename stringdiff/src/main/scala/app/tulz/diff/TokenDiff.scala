@@ -4,7 +4,7 @@ import app.tulz.diff.format.DiffFormat
 import app.tulz.diff.util.DiffCollapse
 import app.tulz.diff.util.DiffPrettier
 import app.tulz.diff.util.DiffTokenize
-
+import compat._
 import scala.collection.mutable.ListBuffer
 
 object TokenDiff {
@@ -15,13 +15,13 @@ object TokenDiff {
     var pos    = 0
     whitespace.findAllMatchIn(s).foreach { m =>
       if (m.start > pos) {
-        buffer.addOne(s.substring(pos, m.start))
+        buffer.append(s.substring(pos, m.start))
       }
-      buffer.addOne(s.substring(m.start, m.end))
+      buffer.append(s.substring(m.start, m.end))
       pos = m.end
     }
     if (pos < s.length) {
-      buffer.addOne(s.substring(pos))
+      buffer.append(s.substring(pos))
     }
     buffer.toIndexedSeq
   }

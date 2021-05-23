@@ -1,12 +1,11 @@
-package app.tulz.diff.util
+package app.tulz.diff
+package util
 
-import app.tulz.diff.DiffElement
-import app.tulz.diff.DiffElement.Diff
-import app.tulz.diff.DiffElement.InBoth
-import app.tulz.diff.DiffElement.InFirst
-import app.tulz.diff.DiffElement.InSecond
-
-import scala.collection.IndexedSeqView
+import DiffElement.Diff
+import DiffElement.InBoth
+import DiffElement.InFirst
+import DiffElement.InSecond
+import compat._
 
 private[diff] object DiffCollapse {
 

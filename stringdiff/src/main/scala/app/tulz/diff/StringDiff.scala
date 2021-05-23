@@ -2,6 +2,7 @@ package app.tulz.diff
 
 import app.tulz.diff.format.DiffFormat
 import app.tulz.diff.util.DiffCollapse
+import compat._
 
 object StringDiff {
 
@@ -9,7 +10,7 @@ object StringDiff {
     s1: String,
     s2: String,
     collapse: Boolean = true
-  ): String = ansi(s1, s2)
+  ): String = ansi(s1, s2, collapse)
 
   def ansi(
     s1: String,
