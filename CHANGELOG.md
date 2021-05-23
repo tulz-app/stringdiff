@@ -1,5 +1,9 @@
 # Changelog
 
+### 0.3.4
+
+Scala 2.12.
+
 ### 0.3.3
 
 Scala 3.
