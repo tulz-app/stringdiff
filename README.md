@@ -6,7 +6,7 @@ Myers diff algorithm in Scala.
 
 
 ```scala
-"app.tulz" %%% "stringdiff" % "0.3.4" 
+"app.tulz" %%% "stringdiff" % "0.4.0" 
 ```
 
 ### Overview
