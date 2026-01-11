@@ -266,10 +266,9 @@ private[diff] object DiffTokenize {
         Nil -> Nil
     }
 
-  private val whitespace = "\\s+".r
   private object Whitespace {
     def unapply(s: IndexedSeq[String]): Option[IndexedSeq[String]] = {
-      Some(s).filter(_.forall(whitespace.findFirstMatchIn(_).isDefined))
+      if (s.forall(_.forall(_.isWhitespace))) Some(s) else None
     }
   }
 
