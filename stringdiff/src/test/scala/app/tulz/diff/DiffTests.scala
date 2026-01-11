@@ -1,8 +1,10 @@
 package app.tulz.diff
 
 import app.tulz.diff.format.AnsiDiffFormat
+import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+
 import scala.Console._
 
 class DiffTests extends AnyFunSuite with Matchers {
@@ -20,7 +22,7 @@ class DiffTests extends AnyFunSuite with Matchers {
     s1: String,
     s2: String,
     expectedDiff: List[DiffElement[String]]
-  ): Unit = {
+  )(implicit pos: Position): Unit = {
     val dashes = 80
     test(name) {
       println(s"--- ${name} ${"-" * (dashes - name.length - 5)}")
@@ -136,7 +138,7 @@ class DiffTests extends AnyFunSuite with Matchers {
     "extra prefix in s1, two extra tokens in s2",
     "prefix-1 match-1               match-2",
     "         match-1 diff-1 diff-2 match-2",
-    List(InFirst("prefix-1 "), InBoth("match-1"), InSecond(" diff-1 diff-2"), InBoth(" match-2"))
+    List(InFirst("prefix-1 "), InBoth("match-1 "), InSecond("diff-1 diff-2 "), InBoth("match-2"))
   )
 
   doTest(

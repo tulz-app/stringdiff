@@ -1,18 +1,16 @@
 package app.tulz.diff
 
-import compat._
-
 object MyersDiff {
 
-  def diff[A](ss1: IndexedSeqView[A], ss2: IndexedSeqView[A]): Seq[Operation] = {
+  def diff[A](ss1: IndexedSeq[A], ss2: IndexedSeq[A]): Seq[Operation] = {
 
     def mod(a: Int, b: Int): Int = {
       (b + (a % b)) % b
     }
 
     def rec(
-      ss1: IndexedSeqView[A],
-      ss2: IndexedSeqView[A],
+      ss1: IndexedSeq[A],
+      ss2: IndexedSeq[A],
       i: Int,
       j: Int
     ): Seq[Operation] = {
@@ -24,10 +22,13 @@ object MyersDiff {
         val w = N - M
         val g = Array.fill(Z)(0)
         val p = Array.fill(Z)(0)
-        for (h <- 0 until (L / 2 + mod(L, 2)) + 1) {
-          for (r <- 0 until 2) {
+        var h = 0
+        while (h < (L / 2 + mod(L, 2)) + 1) {
+          var r = 0
+          while (r < 2) {
             val (c, d, o, m) = if (r == 0) (g, p, 1, 1) else (p, g, 0, -1)
-            for (k <- -(h - 2 * Math.max(0, h - M)) until h - 2 * Math.max(0, h - N) + 1 by 2) {
+            var k            = -(h - 2 * Math.max(0, h - M))
+            while (k < h - 2 * Math.max(0, h - N) + 1) {
               var a =
                 if (k == -h || k != h && c(mod(k - 1, Z)) < c(mod(k + 1, Z))) {
                   c(mod(k + 1, Z))
@@ -61,8 +62,11 @@ object MyersDiff {
                   return Seq.empty
                 }
               }
+              k += 2
             }
+            r += 1
           }
+          h += 1
         }
         throw new RuntimeException("should never have reached here")
       } else if (N > 0) {

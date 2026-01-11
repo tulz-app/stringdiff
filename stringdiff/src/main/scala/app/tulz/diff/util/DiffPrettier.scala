@@ -3,7 +3,6 @@ package app.tulz.diff.util
 import app.tulz.diff.DiffElement
 import app.tulz.diff.DiffElement.Diff
 import app.tulz.diff.DiffElement.InBoth
-import scala.collection.compat._
 
 private[diff] object DiffPrettier {
 
@@ -49,9 +48,10 @@ private[diff] object DiffPrettier {
     s1: String,
     s2: String
   ): (String, String, String) = {
-    val samePrefixLength = s1.indices
-      .takeWhile(i => i < s2.length && s1.charAt(i) == s2.charAt(i) && s1.charAt(i).isWhitespace)
-      .maxOption.fold(0)(_ + 1)
+    val samePrefixLength =
+      s1.indices
+        .takeWhile(i => i < s2.length && s1.charAt(i) == s2.charAt(i) && s1.charAt(i).isWhitespace)
+        .lastOption.fold(0)(_ + 1)
 
     (s1.take(samePrefixLength), s1.drop(samePrefixLength), s2.drop(samePrefixLength))
   }
@@ -62,7 +62,7 @@ private[diff] object DiffPrettier {
   ): (String, String, String) = {
     val sameSuffixLength = s1.indices
       .takeWhile(i => i < s2.length && s1.charAt(s1.length - 1 - i) == s2.charAt(s2.length - 1 - i) && s1.charAt(i).isWhitespace)
-      .maxOption.fold(0)(_ + 1)
+      .lastOption.fold(0)(_ + 1)
     (s1.dropRight(sameSuffixLength), s2.dropRight(sameSuffixLength), s1.takeRight(sameSuffixLength))
   }
 

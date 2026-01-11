@@ -5,13 +5,12 @@ import DiffElement.Diff
 import DiffElement.InBoth
 import DiffElement.InFirst
 import DiffElement.InSecond
-import compat._
 
 private[diff] object DiffCollapse {
 
   def apply[A](
-    diff: List[DiffElement[IndexedSeqView[A]]]
-  ): List[DiffElement[IndexedSeqView[A]]] =
+    diff: List[DiffElement[IndexedSeq[A]]]
+  ): List[DiffElement[IndexedSeq[A]]] =
     ListScan(diff) {
       case InBoth(both) :: tail if both.isEmpty =>
         Nil -> tail
@@ -32,7 +31,7 @@ private[diff] object DiffCollapse {
         (InSecond(second) :: Nil) -> tail
 
       case InBoth(both1) :: InBoth(both2) :: tail =>
-        Nil -> (InBoth(both1.concat(both2)) :: tail)
+        Nil -> (InBoth(both1 ++ both2) :: tail)
 
       case InSecond(second) :: InFirst(first) :: tail =>
         Nil -> (Diff(first, second) :: tail)
@@ -41,22 +40,22 @@ private[diff] object DiffCollapse {
         Nil -> (Diff(first, second) :: tail)
 
       case InFirst(first1) :: InFirst(first2) :: tail =>
-        Nil -> (InFirst(first1.concat(first2)) :: tail)
+        Nil -> (InFirst(first1 ++ first2) :: tail)
 
       case InSecond(second1) :: InSecond(second2) :: tail =>
-        Nil -> (InSecond(second1.concat(second2)) :: tail)
+        Nil -> (InSecond(second1 ++ second2) :: tail)
 
       case InFirst(first1) :: Diff(first2, second) :: tail =>
-        Nil -> (Diff(first1.concat(first2), second) :: tail)
+        Nil -> (Diff(first1 ++ first2, second) :: tail)
 
       case InSecond(second1) :: Diff(first, second2) :: tail =>
-        Nil -> (Diff(first, second1.concat(second2)) :: tail)
+        Nil -> (Diff(first, second1 ++ second2) :: tail)
 
       case Diff(first1, second) :: InFirst(first2) :: tail =>
-        Nil -> (Diff(first1.concat(first2), second) :: tail)
+        Nil -> (Diff(first1 ++ first2, second) :: tail)
 
       case Diff(first, second1) :: InSecond(second2) :: tail =>
-        Nil -> (Diff(first, second1.concat(second2)) :: tail)
+        Nil -> (Diff(first, second1 ++ second2) :: tail)
 
       case head :: tail =>
         (head :: Nil) -> tail

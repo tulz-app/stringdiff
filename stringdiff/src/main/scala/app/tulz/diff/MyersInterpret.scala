@@ -3,7 +3,6 @@ package app.tulz.diff
 import app.tulz.diff.MyersDiff.Operation
 
 import scala.collection.mutable.ListBuffer
-import compat._
 
 object MyersInterpret {
 
@@ -12,13 +11,13 @@ object MyersInterpret {
 
   def apply[A](
     ops: Seq[Operation],
-    s1: IndexedSeqView[A],
-    s2: IndexedSeqView[A]
-  ): List[DiffElement[IndexedSeqView[A]]] =
+    s1: IndexedSeq[A],
+    s2: IndexedSeq[A]
+  ): List[DiffElement[IndexedSeq[A]]] =
     if (ops.isEmpty) {
       List(DiffElement.InBoth(s1))
     } else {
-      val buffer = new ListBuffer[DiffElement[IndexedSeqView[A]]]
+      val buffer = new ListBuffer[DiffElement[IndexedSeq[A]]]
       buffer.sizeHint(ops.length)
       (Start +: ops).zip(ops :+ End).foreach {
         case (Start, Delete(deleteFrom, deleteCount)) =>

@@ -4,7 +4,6 @@ import app.tulz.diff.format.DiffFormat
 import app.tulz.diff.util.DiffCollapse
 import app.tulz.diff.util.DiffPrettier
 import app.tulz.diff.util.DiffTokenize
-import compat._
 import scala.collection.mutable.ListBuffer
 
 object TokenDiff {
@@ -23,7 +22,7 @@ object TokenDiff {
     if (pos < s.length) {
       buffer.append(s.substring(pos))
     }
-    buffer.toIndexedSeq
+    buffer.toVector
   }
 
   def apply(
@@ -54,8 +53,8 @@ object TokenDiff {
     s2: String
   ): List[DiffElement[String]] = {
     val diff = SeqDiff(
-      TokenDiff.tokenize(s1).view,
-      TokenDiff.tokenize(s2).view,
+      TokenDiff.tokenize(s1),
+      TokenDiff.tokenize(s2),
       collapse = false
     )
     var in          = diff
