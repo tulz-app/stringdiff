@@ -3,7 +3,7 @@ inThisBuild(
     organization := "app.tulz",
     homepage := Some(url("https://github.com/tulz-app/stringdiff")),
     licenses := List("MIT" -> url("https://github.com/tulz-app/stringdiff/blob/main/LICENSE.md")),
-    scmInfo := Some(ScmInfo(url("https://github.com/tulz-app/stringdiff"), "scm:git@github.com/tulz-app/laminext.git")),
+    scmInfo := Some(ScmInfo(url("https://github.com/tulz-app/stringdiff"), "scm:git@github.com/tulz-app/stringdiff.git")),
     developers := List(Developer("yurique", "Iurii Malchenko", "i@yurique.com", url("https://github.com/yurique"))),
     scalaVersion := ScalaVersions.v213,
     description := "String diff for Scala",
