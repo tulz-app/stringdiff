@@ -6,17 +6,15 @@ import DiffElement.InFirst
 import DiffElement.InSecond
 
 import scala.collection.mutable.ListBuffer
-import scala.collection.compat._
-import compat._
 
 private[diff] object DiffTokenize {
 
   private def partitionFirstSecond(
-    diff: List[DiffElement[IndexedSeqView[String]]],
-    p: DiffElement[IndexedSeqView[String]] => Boolean,
-    transform: (List[DiffElement[IndexedSeqView[String]]], List[DiffElement[IndexedSeqView[String]]]) => Seq[DiffElement[IndexedSeqView[String]]]
-  ): List[DiffElement[IndexedSeqView[String]]] = {
-    ListScan.withBuffer[DiffElement[IndexedSeqView[String]], DiffElement[IndexedSeqView[String]]](diff) { (list, buffer) =>
+    diff: List[DiffElement[IndexedSeq[String]]],
+    p: DiffElement[IndexedSeq[String]] => Boolean,
+    transform: (List[DiffElement[IndexedSeq[String]]], List[DiffElement[IndexedSeq[String]]]) => Seq[DiffElement[IndexedSeq[String]]]
+  ): List[DiffElement[IndexedSeq[String]]] = {
+    ListScan.withBuffer[DiffElement[IndexedSeq[String]], DiffElement[IndexedSeq[String]]](diff) { (list, buffer) =>
       val (nonFirstSecond, firstSecondAndRest) = list.span(!_.inFirstOrSecond)
       buffer.appendAll(nonFirstSecond)
       val (firstSecond, rest) = firstSecondAndRest.span(_.inFirstOrSecond)
@@ -32,13 +30,13 @@ private[diff] object DiffTokenize {
   }
 
   private def samePrefix(
-    group1: List[DiffElement[IndexedSeqView[String]]],
-    group2: List[DiffElement[IndexedSeqView[String]]]
+    group1: List[DiffElement[IndexedSeq[String]]],
+    group2: List[DiffElement[IndexedSeq[String]]]
   ): Option[
     (
-      List[DiffElement[IndexedSeqView[String]]],
-      List[DiffElement[IndexedSeqView[String]]],
-      List[DiffElement[IndexedSeqView[String]]]
+      List[DiffElement[IndexedSeq[String]]],
+      List[DiffElement[IndexedSeq[String]]],
+      List[DiffElement[IndexedSeq[String]]]
     )
   ] = {
     group1.indices
@@ -50,7 +48,7 @@ private[diff] object DiffTokenize {
             case (InSecond(second), InFirst(first)) => same(first, second)
             case _                                  => false
           })
-      ).maxOption.map { samePrefixLength =>
+      ).lastOption.map { samePrefixLength =>
         val prefix = group1.take(samePrefixLength).collect {
           case InFirst(first)  => InBoth(first)
           case InSecond(first) => InBoth(first)
@@ -60,13 +58,13 @@ private[diff] object DiffTokenize {
   }
 
   private def sameSuffix(
-    group1: List[DiffElement[IndexedSeqView[String]]],
-    group2: List[DiffElement[IndexedSeqView[String]]]
+    group1: List[DiffElement[IndexedSeq[String]]],
+    group2: List[DiffElement[IndexedSeq[String]]]
   ): Option[
     (
-      List[DiffElement[IndexedSeqView[String]]],
-      List[DiffElement[IndexedSeqView[String]]],
-      List[DiffElement[IndexedSeqView[String]]]
+      List[DiffElement[IndexedSeq[String]]],
+      List[DiffElement[IndexedSeq[String]]],
+      List[DiffElement[IndexedSeq[String]]]
     )
   ] = {
     group1.indices
@@ -78,7 +76,7 @@ private[diff] object DiffTokenize {
             case (InSecond(second), InFirst(first)) => same(first, second)
             case _                                  => false
           })
-      ).maxOption.map { sameSuffixLength =>
+      ).lastOption.map { sameSuffixLength =>
         val suffix = group1.takeRight(sameSuffixLength).collect {
           case InFirst(first)   => InBoth(first)
           case InSecond(second) => InBoth(second)
@@ -88,13 +86,13 @@ private[diff] object DiffTokenize {
   }
 
   private def prefixIsSuffix(
-    group1: List[DiffElement[IndexedSeqView[String]]],
-    group2: List[DiffElement[IndexedSeqView[String]]]
+    group1: List[DiffElement[IndexedSeq[String]]],
+    group2: List[DiffElement[IndexedSeq[String]]]
   ): Option[
     (
-      List[DiffElement[IndexedSeqView[String]]],
-      List[DiffElement[IndexedSeqView[String]]],
-      List[DiffElement[IndexedSeqView[String]]]
+      List[DiffElement[IndexedSeq[String]]],
+      List[DiffElement[IndexedSeq[String]]],
+      List[DiffElement[IndexedSeq[String]]]
     )
   ] = {
     group1.indices
@@ -106,7 +104,7 @@ private[diff] object DiffTokenize {
             case (InSecond(second), InFirst(first)) => same(first, second)
             case _                                  => false
           }
-      ).maxOption.map { prefixSuffixLength =>
+      ).lastOption.map { prefixSuffixLength =>
         val prefix = group1.take(prefixSuffixLength).collect {
           case InFirst(first)  => InBoth(first)
           case InSecond(first) => InBoth(first)
@@ -116,13 +114,13 @@ private[diff] object DiffTokenize {
   }
 
   private def suffixIsPrefix(
-    group1: List[DiffElement[IndexedSeqView[String]]],
-    group2: List[DiffElement[IndexedSeqView[String]]]
+    group1: List[DiffElement[IndexedSeq[String]]],
+    group2: List[DiffElement[IndexedSeq[String]]]
   ): Option[
     (
-      List[DiffElement[IndexedSeqView[String]]],
-      List[DiffElement[IndexedSeqView[String]]],
-      List[DiffElement[IndexedSeqView[String]]]
+      List[DiffElement[IndexedSeq[String]]],
+      List[DiffElement[IndexedSeq[String]]],
+      List[DiffElement[IndexedSeq[String]]]
     )
   ] = {
     group1.indices
@@ -134,7 +132,7 @@ private[diff] object DiffTokenize {
             case (InSecond(second), InFirst(first)) => same(first, second)
             case _                                  => false
           }
-      ).maxOption.map { suffixPrefixLength =>
+      ).lastOption.map { suffixPrefixLength =>
         val suffix = group1.takeRight(suffixPrefixLength).collect {
           case InFirst(first)  => InBoth(first)
           case InSecond(first) => InBoth(first)
@@ -144,19 +142,19 @@ private[diff] object DiffTokenize {
   }
 
   private def processFirstSecondGroups(
-    diff: List[DiffElement[IndexedSeqView[String]]],
-    p: DiffElement[IndexedSeqView[String]] => Boolean
-  ): List[DiffElement[IndexedSeqView[String]]] =
+    diff: List[DiffElement[IndexedSeq[String]]],
+    p: DiffElement[IndexedSeq[String]] => Boolean
+  ): List[DiffElement[IndexedSeq[String]]] =
     partitionFirstSecond(
       diff,
       p,
       (group1, group2) => {
-        val buffer       = ListBuffer.empty[DiffElement[IndexedSeqView[String]]]
-        val bufferSuffix = ListBuffer.empty[DiffElement[IndexedSeqView[String]]]
+        val buffer       = ListBuffer.empty[DiffElement[IndexedSeq[String]]]
+        val bufferSuffix = ListBuffer.empty[DiffElement[IndexedSeq[String]]]
 
         var work1 = group1
         var work2 = group2
-        samePrefix(work1, work2).map { case (prefix, rest1, rest2) =>
+        samePrefix(work1, work2).foreach { case (prefix, rest1, rest2) =>
           work1 = rest1
           work2 = rest2
           buffer.appendAll(prefix)
@@ -196,19 +194,19 @@ private[diff] object DiffTokenize {
     )
 
   def firstsGoFirst(
-    diff: List[DiffElement[IndexedSeqView[String]]]
-  ): List[DiffElement[IndexedSeqView[String]]] =
+    diff: List[DiffElement[IndexedSeq[String]]]
+  ): List[DiffElement[IndexedSeq[String]]] =
     processFirstSecondGroups(diff, _.inFirst)
 
   def secondsGoFirst(
-    diff: List[DiffElement[IndexedSeqView[String]]]
-  ): List[DiffElement[IndexedSeqView[String]]] =
+    diff: List[DiffElement[IndexedSeq[String]]]
+  ): List[DiffElement[IndexedSeq[String]]] =
     processFirstSecondGroups(diff, _.inSecond)
 
-  private def same(s1: IndexedSeqView[String], s2: IndexedSeqView[String]): Boolean =
+  private def same(s1: IndexedSeq[String], s2: IndexedSeq[String]): Boolean =
     s1.size == s2.size && s1.indices.forall(i => s1(i) == s2(i))
 
-  def join(diff: List[DiffElement[IndexedSeqView[String]]]): List[DiffElement[IndexedSeqView[String]]] =
+  def join(diff: List[DiffElement[IndexedSeq[String]]]): List[DiffElement[IndexedSeq[String]]] =
     ListScan(diff) {
       case InSecond(second) :: InFirst(first) :: tail if same(first, second) =>
         Nil -> (
@@ -227,8 +225,8 @@ private[diff] object DiffTokenize {
     }
 
   def moveWhitespace(
-    diff: List[DiffElement[IndexedSeqView[String]]]
-  ): List[DiffElement[IndexedSeqView[String]]] =
+    diff: List[DiffElement[IndexedSeq[String]]]
+  ): List[DiffElement[IndexedSeq[String]]] =
     ListScan(diff) {
 
       case InSecond(second) :: InBoth(Whitespace(both)) :: InFirst(first) :: tail if first == second =>
@@ -264,12 +262,13 @@ private[diff] object DiffTokenize {
       case head :: tail =>
         (head :: Nil) -> tail
 
-      case Nil => Nil -> Nil
+      case Nil =>
+        Nil -> Nil
     }
 
   private val whitespace = "\\s+".r
   private object Whitespace {
-    def unapply(s: IndexedSeqView[String]): Option[IndexedSeqView[String]] = {
+    def unapply(s: IndexedSeq[String]): Option[IndexedSeq[String]] = {
       Some(s).filter(_.forall(whitespace.findFirstMatchIn(_).isDefined))
     }
   }
