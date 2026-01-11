@@ -14,7 +14,7 @@ inThisBuild(
     ),
     Test / publishArtifact := false,
     Test / parallelExecution := false,
-    githubWorkflowJavaVersions := Seq("openjdk@1.11.0"),
+    githubWorkflowJavaVersions += JavaSpec.temurin("17"),
     githubWorkflowTargetTags ++= Seq("v*"),
     githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
     githubWorkflowPublish := Seq(WorkflowStep.Sbt(List("ci-release"))),
@@ -41,8 +41,7 @@ lazy val stringdiff =
     .settings(
       ScalaOptions.fixOptions,
       libraryDependencies ++= Seq(
-        "org.scala-lang.modules" %%% "scala-collection-compat" % "2.4.4",
-        "org.scalatest"          %%% "scalatest"               % "3.2.9" % Test
+        "org.scalatest" %%% "scalatest" % "3.2.9" % Test
       )
     )
 
