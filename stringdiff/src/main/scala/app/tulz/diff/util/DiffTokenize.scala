@@ -44,8 +44,8 @@ private[diff] object DiffTokenize {
       .takeWhile(i =>
         i <= group2.size &&
           ((group1(i - 1), group2(i - 1)) match {
-            case (InFirst(first), InSecond(second)) => same(first, second)
-            case (InSecond(second), InFirst(first)) => same(first, second)
+            case (InFirst(first), InSecond(second)) => first == second
+            case (InSecond(second), InFirst(first)) => first == second
             case _                                  => false
           })
       ).lastOption.map { samePrefixLength =>
@@ -72,8 +72,8 @@ private[diff] object DiffTokenize {
       .takeWhile(i =>
         i <= group2.size &&
           ((group1(group1.length - i), group2(group2.size - i)) match {
-            case (InFirst(first), InSecond(second)) => same(first, second)
-            case (InSecond(second), InFirst(first)) => same(first, second)
+            case (InFirst(first), InSecond(second)) => first == second
+            case (InSecond(second), InFirst(first)) => first == second
             case _                                  => false
           })
       ).lastOption.map { sameSuffixLength =>
@@ -100,8 +100,8 @@ private[diff] object DiffTokenize {
       .takeWhile(i =>
         i <= group2.size &&
           group1.take(i).zip(group2.takeRight(i)).forall {
-            case (InFirst(first), InSecond(second)) => same(first, second)
-            case (InSecond(second), InFirst(first)) => same(first, second)
+            case (InFirst(first), InSecond(second)) => first == second
+            case (InSecond(second), InFirst(first)) => first == second
             case _                                  => false
           }
       ).lastOption.map { prefixSuffixLength =>
@@ -128,8 +128,8 @@ private[diff] object DiffTokenize {
       .takeWhile(i =>
         i <= group2.size &&
           group1.takeRight(i).zip(group2.take(i)).forall {
-            case (InFirst(first), InSecond(second)) => same(first, second)
-            case (InSecond(second), InFirst(first)) => same(first, second)
+            case (InFirst(first), InSecond(second)) => first == second
+            case (InSecond(second), InFirst(first)) => first == second
             case _                                  => false
           }
       ).lastOption.map { suffixPrefixLength =>
@@ -203,17 +203,14 @@ private[diff] object DiffTokenize {
   ): List[DiffElement[IndexedSeq[String]]] =
     processFirstSecondGroups(diff, _.inSecond)
 
-  private def same(s1: IndexedSeq[String], s2: IndexedSeq[String]): Boolean =
-    s1.size == s2.size && s1.indices.forall(i => s1(i) == s2(i))
-
   def join(diff: List[DiffElement[IndexedSeq[String]]]): List[DiffElement[IndexedSeq[String]]] =
     ListScan(diff) {
-      case InSecond(second) :: InFirst(first) :: tail if same(first, second) =>
+      case InSecond(second) :: InFirst(first) :: tail if first == second =>
         Nil -> (
           InBoth(first) :: tail
         )
 
-      case InFirst(first) :: InSecond(second) :: tail if same(first, second) =>
+      case InFirst(first) :: InSecond(second) :: tail if first == second =>
         Nil -> (
           InBoth(first) :: tail
         )
